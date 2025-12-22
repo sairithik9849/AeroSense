@@ -62,6 +62,11 @@ export default function About({ onClose }) {
       description: 'Lightweight API server that glues all data sources together'
     },
     {
+      category: 'Caching & Storage',
+      items: ['Upstash Redis'],
+      description: 'Serverless Redis for fast data caching to reduce API calls'
+    },
+    {
       category: 'Data APIs',
       items: ['METAR', 'WindBorne', 'OpenSky', 'Gemini'],
       description: 'Real-time weather, historical wind, live aircraft, and AI insights'
@@ -164,7 +169,7 @@ export default function About({ onClose }) {
           {/* Tech Stack */}
           <div>
             <h3 className="text-sm font-bold text-zinc-300 uppercase tracking-wide mb-4">Technology</h3>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
               {techStack.map((section, idx) => (
                 <div key={idx} className="bg-zinc-800/30 border border-zinc-700/50 rounded-lg p-4">
                   <h4 className="font-semibold text-white text-sm mb-2">{section.category}</h4>
