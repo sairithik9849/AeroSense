@@ -241,25 +241,39 @@ const tryFetchOpenSky = async (lat, lng) => {
       console.log(`[OpenSky] ADS-B Exchange SUCCESS! Found ${response.data.ac.length} aircraft`);
       
       // Convert ADS-B Exchange format to OpenSky format
-      const states = response.data.ac.map(ac => [
-        ac.hex || '',           // 0: icao24
-        ac.flight?.trim() || ac.r || '', // 1: callsign
-        ac.country || '',       // 2: origin_country
-        null,                   // 3: time_position
-        null,                   // 4: last_contact
-        ac.lon,                 // 5: longitude
-        ac.lat,                 // 6: latitude
-        ac.alt_baro ? ac.alt_baro * 0.3048 : null, // 7: baro_altitude (convert ft to m)
-        ac.ground === 1,        // 8: on_ground
-        ac.gs ? ac.gs * 0.514444 : null, // 9: velocity (convert knots to m/s)
-        ac.track,               // 10: true_track
-        ac.baro_rate ? ac.baro_rate * 0.00508 : null, // 11: vertical_rate
-        null,                   // 12: sensors
-        ac.alt_geom ? ac.alt_geom * 0.3048 : null, // 13: geo_altitude
-        ac.squawk || null,      // 14: squawk
-        false,                  // 15: spi
-        0,                      // 16: position_source
-      ]);
+      // Handle missing/null values properly to avoid NaN
+      const states = response.data.ac.map(ac => {
+        // Safely convert altitude from feet to meters, default to 0 if missing
+        const altBaro = (ac.alt_baro && ac.alt_baro !== 'ground') 
+          ? ac.alt_baro * 0.3048 
+          : (ac.alt_geom ? ac.alt_geom * 0.3048 : null);
+        
+        // Safely convert velocity from knots to m/s
+        const velocity = (typeof ac.gs === 'number') ? ac.gs * 0.514444 : null;
+        
+        // Track/heading - use 0 as default if missing
+        const track = (typeof ac.track === 'number') ? ac.track : 0;
+        
+        return [
+          ac.hex || '',                    // 0: icao24
+          ac.flight?.trim() || ac.r || '', // 1: callsign
+          ac.country || '',                // 2: origin_country
+          Date.now() / 1000,               // 3: time_position (use current time)
+          Date.now() / 1000,               // 4: last_contact (use current time)
+          ac.lon,                          // 5: longitude
+          ac.lat,                          // 6: latitude
+          altBaro,                         // 7: baro_altitude (in meters)
+          ac.ground === true || ac.alt_baro === 'ground', // 8: on_ground
+          velocity,                        // 9: velocity (in m/s)
+          track,                           // 10: true_track (in degrees)
+          ac.baro_rate ? ac.baro_rate * 0.00508 : null, // 11: vertical_rate
+          null,                            // 12: sensors
+          ac.alt_geom ? ac.alt_geom * 0.3048 : null, // 13: geo_altitude
+          ac.squawk || null,               // 14: squawk
+          false,                           // 15: spi
+          0,                               // 16: position_source
+        ];
+      });
       
       return { time: Date.now(), states };
     }
