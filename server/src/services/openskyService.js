@@ -8,11 +8,25 @@ const OPENSKY_BASE_URL = 'https://opensky-network.org/api/states/all';
 const PROXY_SERVICES = [
   // AllOrigins proxy - often works well
   { name: 'allorigins', getUrl: (url) => `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}` },
-  // corsproxy.io
+  // corsproxy.io - reliable
   { name: 'corsproxy', getUrl: (url) => `https://corsproxy.io/?${encodeURIComponent(url)}` },
-  // cors-anywhere alternative
-  { name: 'corsanywhere', getUrl: (url) => `https://cors-anywhere.herokuapp.com/${url}` },
+  // proxy.cors.sh - another option
+  { name: 'corssh', getUrl: (url) => `https://proxy.cors.sh/${url}` },
 ];
+
+/**
+ * Build OpenSky URL with embedded credentials for proxy requests
+ */
+const buildAuthenticatedOpenSkyUrl = (lamin, lomin, lamax, lomax) => {
+  const username = process.env.OPENSKY_CLIENT_ID;
+  const password = process.env.OPENSKY_CLIENT_SECRET;
+  
+  // Include auth in URL for proxy requests
+  if (username && password) {
+    return `https://${encodeURIComponent(username)}:${encodeURIComponent(password)}@opensky-network.org/api/states/all?lamin=${lamin}&lomin=${lomin}&lamax=${lamax}&lomax=${lomax}`;
+  }
+  return `${OPENSKY_BASE_URL}?lamin=${lamin}&lomin=${lomin}&lamax=${lamax}&lomax=${lomax}`;
+};
 
 /**
  * Get Basic Auth header for OpenSky Network
@@ -96,7 +110,7 @@ const tryFetchOpenSky = async (lat, lng) => {
         ...browserHeaders,
         ...(authHeader ? { 'Authorization': authHeader } : {}),
       },
-      timeout: 30000,
+      timeout: 10000, // Short timeout - if blocked, fail fast
       validateStatus: (status) => status < 500,
     });
     
@@ -124,7 +138,7 @@ const tryFetchOpenSky = async (lat, lng) => {
       const response = await axios.get(authUrl, {
         params: { lamin, lomin, lamax, lomax },
         headers: browserHeaders,
-        timeout: 30000,
+        timeout: 10000, // Short timeout - if blocked, fail fast
         validateStatus: (status) => status < 500,
       });
       
@@ -143,8 +157,9 @@ const tryFetchOpenSky = async (lat, lng) => {
     errors.push({ method: 'url-auth', error: errMsg });
   }
 
-  // Method 3: Try proxy services
-  const openSkyUrl = buildOpenSkyUrl(lamin, lomin, lamax, lomax);
+  // Method 3: Try proxy services (with auth embedded in URL)
+  const openSkyUrl = buildAuthenticatedOpenSkyUrl(lamin, lomin, lamax, lomax);
+  console.log(`[OpenSky] Using authenticated URL for proxies: ${openSkyUrl.includes('@') ? 'YES' : 'NO'}`);
   
   for (const proxy of PROXY_SERVICES) {
     try {
@@ -155,21 +170,41 @@ const tryFetchOpenSky = async (lat, lng) => {
         headers: {
           ...browserHeaders,
           ...(authHeader ? { 'Authorization': authHeader } : {}),
-          'Origin': 'https://opensky-network.org',
         },
-        timeout: 30000,
+        timeout: 15000, // Shorter timeout to fit Vercel limits
         validateStatus: (status) => status < 500,
       });
       
+      console.log(`[OpenSky] ${proxy.name} response status: ${response.status}`);
+      console.log(`[OpenSky] ${proxy.name} response type: ${typeof response.data}`);
+      
       if (response.status === 200 && response.data) {
+        let data = response.data;
+        
+        // If response is a string, try to parse it as JSON
+        if (typeof data === 'string') {
+          try {
+            data = JSON.parse(data);
+            console.log(`[OpenSky] ${proxy.name} parsed string response to JSON`);
+          } catch (e) {
+            console.log(`[OpenSky] ${proxy.name} response is not valid JSON string`);
+            throw new Error(`Invalid JSON from ${proxy.name}`);
+          }
+        }
+        
         // Handle case where proxy returns wrapper object
-        const data = response.data.contents || response.data;
-        if (data && (data.states !== undefined || data.time !== undefined)) {
-          console.log(`[OpenSky] ${proxy.name} proxy SUCCESS!`);
-          return data;
+        data = data.contents || data;
+        
+        // Check if it looks like OpenSky data
+        if (data && typeof data === 'object') {
+          console.log(`[OpenSky] ${proxy.name} data keys: ${Object.keys(data).join(', ')}`);
+          if ('states' in data || 'time' in data) {
+            console.log(`[OpenSky] ${proxy.name} proxy SUCCESS!`);
+            return data;
+          }
         }
       }
-      throw new Error(`Invalid response from ${proxy.name}`);
+      throw new Error(`Invalid response structure from ${proxy.name}`);
     } catch (error) {
       const errMsg = error.code || error.message;
       console.log(`[OpenSky] ${proxy.name} proxy failed: ${errMsg}`);
@@ -177,54 +212,9 @@ const tryFetchOpenSky = async (lat, lng) => {
     }
   }
 
-  // Method 4: Try without bounding box (global data, then filter locally)
-  try {
-    console.log('[OpenSky] Trying Method 4: Global fetch without bounding box (will filter locally)...');
-    
-    const response = await axios.get(OPENSKY_BASE_URL, {
-      headers: {
-        ...browserHeaders,
-        ...(authHeader ? { 'Authorization': authHeader } : {}),
-      },
-      timeout: 60000, // Longer timeout for global fetch
-      validateStatus: (status) => status < 500,
-    });
-    
-    if (response.status === 200 && response.data) {
-      console.log('[OpenSky] Method 4 SUCCESS! (global fetch)');
-      return response.data;
-    } else {
-      throw new Error(`Status ${response.status}`);
-    }
-  } catch (error) {
-    const errMsg = error.code || error.message;
-    console.log(`[OpenSky] Method 4 failed: ${errMsg}`);
-    errors.push({ method: 'global-fetch', error: errMsg });
-  }
-
-  // Method 5: Try via allorigins with global fetch
-  try {
-    console.log('[OpenSky] Trying Method 5: AllOrigins proxy with global fetch...');
-    const globalUrl = OPENSKY_BASE_URL;
-    const proxyUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(globalUrl)}`;
-    
-    const response = await axios.get(proxyUrl, {
-      headers: browserHeaders,
-      timeout: 60000,
-      validateStatus: (status) => status < 500,
-    });
-    
-    if (response.status === 200 && response.data) {
-      console.log('[OpenSky] Method 5 SUCCESS!');
-      return response.data;
-    } else {
-      throw new Error(`Status ${response.status}`);
-    }
-  } catch (error) {
-    const errMsg = error.code || error.message;
-    console.log(`[OpenSky] Method 5 failed: ${errMsg}`);
-    errors.push({ method: 'allorigins-global', error: errMsg });
-  }
+  // Skip Methods 4 and 5 (global fetch) - they take too long and hit Vercel timeout
+  // Direct requests to OpenSky are being blocked from Vercel IPs
+  console.log('[OpenSky] Skipping global fetch methods (would exceed Vercel timeout)');
 
   // All methods failed
   console.error('[OpenSky] All methods failed:', JSON.stringify(errors, null, 2));
