@@ -125,41 +125,44 @@ export default function Controls({
 
     return (
         <>
-        <div className="absolute top-4 left-4 z-50 flex flex-col gap-3 w-96 font-sans">
+        <div className="absolute top-2 left-2 right-2 md:right-auto md:w-96 z-50 flex flex-col gap-2 md:gap-3 font-sans max-h-[90vh] overflow-y-auto">
 
             {/* Header: Title + About Button */}
-            <div className="flex items-center justify-between px-1">
-                <div className="flex items-center gap-2.5">
-                    <div className="p-1.5 bg-blue-500/20 rounded-lg border border-blue-500/30">
-                        <Wind size={18} className="text-blue-400" />
+            <div className="flex items-center justify-between px-1 gap-2">
+                <div className="flex items-center gap-2 md:gap-2.5 min-w-0">
+                    <div className="p-1 md:p-1.5 bg-blue-500/20 rounded-lg border border-blue-500/30 shrink-0">
+                        <Wind size={16} className="md:hidden text-blue-400" />
+                        <Wind size={18} className="hidden md:block text-blue-400" />
                     </div>
-                    <h1 className="text-xl font-bold bg-linear-to-r from-blue-100 to-blue-400 bg-clip-text text-transparent drop-shadow-sm tracking-tight">
+                    <h1 className="text-lg md:text-xl font-bold bg-linear-to-r from-blue-100 to-blue-400 bg-clip-text text-transparent drop-shadow-sm tracking-tight truncate">
                         AeroSense
                     </h1>
                 </div>
                 <button
                     onClick={() => setShowAbout(true)}
-                    className="p-2 rounded-lg border border-zinc-700/60 bg-zinc-900/90 backdrop-blur-md text-zinc-400 hover:text-blue-300 hover:border-blue-500/50 transition-all"
+                    className="p-2 rounded-lg border border-zinc-700/60 bg-zinc-900/90 backdrop-blur-md text-zinc-400 hover:text-blue-300 hover:border-blue-500/50 transition-all shrink-0"
                     title="Learn more about AeroSense"
                 >
-                    <BookOpen size={18} />
+                    <BookOpen size={16} className="md:hidden" />
+                    <BookOpen size={18} className="hidden md:block" />
                 </button>
             </div>
 
             {/* Search Bar */}
             <div className="relative group">
                 <div className="absolute inset-y-0 left-3 flex items-center pointer-events-none text-zinc-500 group-focus-within:text-blue-400 transition-colors">
-                    <Search size={18} />
+                    <Search size={16} className="md:hidden" />
+                    <Search size={18} className="hidden md:block" />
                 </div>
                 <input
                     type="text"
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    placeholder="Search stations..."
-                    className="w-full bg-zinc-900/90 backdrop-blur-md border border-zinc-700/60 text-white pl-10 pr-4 py-3 rounded-xl shadow-lg focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500/50 transition-all placeholder:text-zinc-500 hover:bg-zinc-900 hover:border-zinc-600/80"
+                    placeholder="Search..."
+                    className="w-full bg-zinc-900/90 backdrop-blur-md border border-zinc-700/60 text-white text-sm md:text-base pl-9 md:pl-10 pr-3 md:pr-4 py-2 md:py-3 rounded-lg md:rounded-xl shadow-lg focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500/50 transition-all placeholder:text-zinc-500 hover:bg-zinc-900 hover:border-zinc-600/80"
                 />
                 {/* Search icon background accent */}
-                <div className="absolute inset-y-0 left-0 w-10 bg-linear-to-r from-blue-500/5 to-transparent rounded-l-xl pointer-events-none group-focus-within:from-blue-500/10 transition-colors" />
+                <div className="absolute inset-y-0 left-0 w-9 md:w-10 bg-linear-to-r from-blue-500/5 to-transparent rounded-l-lg md:rounded-l-xl pointer-events-none group-focus-within:from-blue-500/10 transition-colors" />
             </div>
 
             {/* Time Travel Controls (Optimized for Visibility) */}
@@ -457,19 +460,20 @@ export default function Controls({
             )}
 
             {results.length > 0 && (
-                <div className="bg-zinc-900/95 backdrop-blur-md border border-zinc-700 rounded-xl shadow-2xl overflow-hidden max-h-64 overflow-y-auto custom-scrollbar">
+                <div className="bg-zinc-900/95 backdrop-blur-md border border-zinc-700 rounded-lg md:rounded-xl shadow-2xl overflow-hidden max-h-48 md:max-h-64 overflow-y-auto custom-scrollbar">
                     {results.map((station) => (
                         <button
                             key={station.station_id}
                             onClick={() => onSelect(station)}
-                            className="w-full text-left px-4 py-3 hover:bg-zinc-800/50 transition flex items-center gap-3 border-b border-zinc-800 last:border-0"
+                            className="w-full text-left px-3 md:px-4 py-2 md:py-3 hover:bg-zinc-800/50 transition flex items-center gap-2 md:gap-3 border-b border-zinc-800 last:border-0"
                         >
-                            <div className="p-2 bg-blue-500/10 rounded-full text-blue-400">
-                                <MapPin size={16} />
+                            <div className="p-1.5 md:p-2 bg-blue-500/10 rounded-full text-blue-400 shrink-0">
+                                <MapPin size={14} className="md:hidden" />
+                                <MapPin size={16} className="hidden md:block" />
                             </div>
-                            <div>
-                                <p className="font-bold text-sm text-zinc-200">{station.station_name || "Unknown Station"}</p>
-                                <p className="text-xs text-zinc-500 font-mono">{station.station_id}</p>
+                            <div className="min-w-0 flex-1">
+                                <p className="font-bold text-xs md:text-sm text-zinc-200 truncate">{station.station_name || "Unknown Station"}</p>
+                                <p className="text-[10px] md:text-xs text-zinc-500 font-mono">{station.station_id}</p>
                             </div>
                         </button>
                     ))}

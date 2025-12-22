@@ -67,16 +67,16 @@ export default function Sidebar({ station, onClose, weather: propWeather, timeIn
   };
 
   return (
-    <div className="absolute top-4 right-4 w-96 bg-zinc-900/95 backdrop-blur border border-zinc-700 text-white rounded-xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh] z-50">
+    <div className="absolute top-2 right-2 bottom-2 md:bottom-auto md:top-4 md:right-4 w-full md:w-96 bg-zinc-900/95 backdrop-blur border border-zinc-700 text-white rounded-lg md:rounded-xl shadow-2xl overflow-hidden flex flex-col max-h-[calc(100vh-1rem)] md:max-h-[90vh] z-50">
 
       {/* Header */}
-      <div className="p-4 border-b border-zinc-700 bg-black/20">
-        <div className="flex items-start justify-between mb-2">
-          <div className="flex-1">
-            <h2 className="font-bold text-lg">{station.name || "Unknown Station"}</h2>
-            <p className="text-xs text-zinc-400 font-mono">{station.id || "ID: N/A"}</p>
+      <div className="p-3 md:p-4 border-b border-zinc-700 bg-black/20">
+        <div className="flex items-start justify-between mb-2 gap-2">
+          <div className="flex-1 min-w-0">
+            <h2 className="font-bold text-base md:text-lg truncate">{station.name || "Unknown Station"}</h2>
+            <p className="text-[10px] md:text-xs text-zinc-400 font-mono truncate">{station.id || "ID: N/A"}</p>
           </div>
-          <div className="flex items-center gap-2 ml-2">
+          <div className="flex items-center gap-1 md:gap-2 ml-2 shrink-0">
             <button 
               onClick={async () => {
                 if (!onRefreshWeather) return;
@@ -89,17 +89,19 @@ export default function Sidebar({ station, onClose, weather: propWeather, timeIn
               }}
               disabled={weatherLoading}
               className={clsx(
-                "p-2 rounded border transition-all hover:scale-105 active:scale-95",
+                "p-1.5 md:p-2 rounded border transition-all hover:scale-105 active:scale-95",
                 weatherLoading
                   ? "bg-zinc-700/50 text-zinc-500 border-zinc-600/50 cursor-not-allowed"
                   : "bg-cyan-500/20 text-cyan-400 border-cyan-500/50 hover:bg-cyan-500/30"
               )}
               title="Refresh weather data"
             >
-              <RefreshCw size={18} className={clsx(weatherLoading && "animate-spin")} />
+              <RefreshCw size={16} className={clsx("md:hidden", weatherLoading && "animate-spin")} />
+              <RefreshCw size={18} className={clsx("hidden md:block", weatherLoading && "animate-spin")} />
             </button>
-            <button onClick={onClose} className="p-2 hover:bg-zinc-800 rounded-full transition">
-              <X size={20} />
+            <button onClick={onClose} className="p-2 hover:bg-zinc-800 rounded-lg transition">
+              <X size={18} className="md:hidden" />
+              <X size={20} className="hidden md:block" />
             </button>
           </div>
         </div>
@@ -145,7 +147,7 @@ export default function Sidebar({ station, onClose, weather: propWeather, timeIn
       </div>
 
       {/* Content Container */}
-      <div className="p-4 overflow-y-auto space-y-6">
+      <div className="p-3 md:p-4 overflow-y-auto space-y-4 md:space-y-6">
 
         {/* State 1: Loading (Weather) */}
         {!propWeather && (

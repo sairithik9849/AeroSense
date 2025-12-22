@@ -98,7 +98,7 @@ export default function FlightInfoPanel({ flight, clickPoint, onClose }) {
   return (
     <div 
       ref={cardRef}
-      className="absolute w-96 bg-zinc-900/95 backdrop-blur border border-zinc-700 text-white rounded-xl shadow-2xl overflow-hidden flex flex-col max-h-[80vh] z-50"
+      className="absolute w-[calc(100%-1rem)] md:w-96 bg-zinc-900/95 backdrop-blur border border-zinc-700 text-white rounded-lg md:rounded-xl shadow-2xl overflow-hidden flex flex-col max-h-[70vh] md:max-h-[80vh] z-50"
       style={{
         left: `${position.x}px`,
         top: `${position.y}px`,
@@ -106,39 +106,42 @@ export default function FlightInfoPanel({ flight, clickPoint, onClose }) {
     >
       {/* Header - Draggable */}
       <div 
-        className="p-4 border-b border-zinc-700 bg-black/20 cursor-grab active:cursor-grabbing select-none"
+        className="p-3 md:p-4 border-b border-zinc-700 bg-black/20 cursor-grab active:cursor-grabbing select-none"
         onMouseDown={handleMouseDown}
       >
-        <div className="flex items-start justify-between mb-2">
-          <div className="flex-1">
+        <div className="flex items-start justify-between mb-2 gap-2">
+          <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2 mb-1">
-              <Plane size={20} className="text-amber-400" />
-              <h2 className="font-bold text-lg font-mono">{flight.callsign || "UNKNOWN"}</h2>
+              <Plane size={16} className="md:hidden text-amber-400 shrink-0" />
+              <Plane size={20} className="hidden md:block text-amber-400 shrink-0" />
+              <h2 className="font-bold text-sm md:text-lg font-mono truncate">{flight.callsign || "UNKNOWN"}</h2>
             </div>
-            <p className="text-xs text-zinc-400">Flight Information</p>
+            <p className="text-[10px] md:text-xs text-zinc-400">Flight Information</p>
           </div>
-          <div className="flex items-center gap-2 ml-2">
+          <div className="flex items-center gap-1 md:gap-2 ml-2 shrink-0">
             {flight.callsign && (
               <button 
                 onClick={() => window.open(`https://www.flightaware.com/live/flight/${flight.callsign}`, '_blank')}
-                className="p-2 hover:bg-zinc-800 rounded-full transition"
+                className="p-1.5 md:p-2 hover:bg-zinc-800 rounded transition"
                 title="Track flight online (FlightAware)"
               >
-                <ExternalLink size={18} className="text-blue-400" />
+                <ExternalLink size={14} className="md:hidden text-blue-400" />
+                <ExternalLink size={18} className="hidden md:block text-blue-400" />
               </button>
             )}
             <button 
               onClick={onClose} 
-              className="p-2 hover:bg-zinc-800 rounded-full transition"
+              className="p-1.5 md:p-2 hover:bg-zinc-800 rounded transition"
             >
-              <X size={20} />
+              <X size={16} className="md:hidden" />
+              <X size={20} className="hidden md:block" />
             </button>
           </div>
         </div>
       </div>
 
       {/* Content */}
-      <div className="p-4 overflow-y-auto space-y-4 custom-scrollbar">
+      <div className="p-3 md:p-4 overflow-y-auto space-y-3 md:space-y-4 custom-scrollbar">
         {/* Risk Assessment with explanation */}
         <RiskExplanation 
           risk={risk}
