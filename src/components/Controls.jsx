@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Search, MapPin, Wind, Plane, Clock, Sparkles, Loader2, X, Thermometer, AlertTriangle, CheckCircle, ChevronDown, ChevronUp, Maximize2, Columns, BookOpen } from 'lucide-react';
+import { Search, MapPin, Wind, Plane, Clock, Sparkles, Loader2, X, Thermometer, AlertTriangle, CheckCircle, ChevronDown, ChevronUp, Maximize2, Columns, BookOpen, Info } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import About from './About';
 import { getApiEndpoint } from '../utils/api';
