@@ -52,6 +52,7 @@ function ExpandableSection({ title, icon, content, defaultOpen = false }) {
 }
 
 export default function Controls({
+    mapRef,
     searchQuery,
     setSearchQuery,
     stations = [],
@@ -129,7 +130,19 @@ export default function Controls({
 
             {/* Header: Title + About Button */}
             <div className="flex items-center justify-between px-1 gap-2">
-                <div className="flex items-center gap-2 md:gap-2.5 min-w-0">
+                <button 
+                    onClick={() => {
+                        if (mapRef?.current) {
+                            mapRef.current.flyTo({
+                                center: [-95, 40],
+                                zoom: 3,
+                                duration: 1500
+                            });
+                        }
+                    }}
+                    className="flex items-center gap-2 md:gap-2.5 min-w-0 hover:opacity-80 transition-opacity"
+                    title="Zoom out to world view"
+                >
                     <div className="p-1 md:p-1.5 bg-blue-500/20 rounded-lg border border-blue-500/30 shrink-0">
                         <Wind size={16} className="md:hidden text-blue-400" />
                         <Wind size={18} className="hidden md:block text-blue-400" />
@@ -137,7 +150,7 @@ export default function Controls({
                     <h1 className="text-lg md:text-xl font-bold bg-linear-to-r from-blue-100 to-blue-400 bg-clip-text text-transparent drop-shadow-sm tracking-tight truncate">
                         AeroSense
                     </h1>
-                </div>
+                </button>
                 <button
                     onClick={() => setShowAbout(true)}
                     className="p-2 rounded-lg border border-zinc-700/60 bg-zinc-900/90 backdrop-blur-md text-zinc-400 hover:text-blue-300 hover:border-blue-500/50 transition-all shrink-0"

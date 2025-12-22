@@ -216,6 +216,7 @@ export default function App() {
 
       {/* Floating Controls + Time Slider */}
       <Controls
+        mapRef={mapRef}
         searchQuery={searchQuery}
         setSearchQuery={onSearchChange}
         stations={stations}
