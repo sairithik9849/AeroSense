@@ -41,15 +41,9 @@ const FlightOverlay = forwardRef(({ station, onFlightsUpdate, onRateLimit }, ref
           f => f.lat !== null && f.lng !== null && f.altitude !== null
         );
 
-        // Filter to only flights approaching the station
-        // Use stricter criteria to avoid showing flights to nearby airports
-        const approachingFlights = filterApproachingFlights(validFlights, station, {
-          maxAngleDifference: 20, // Stricter: within 20 degrees of direct heading
-          maxDistance: 50, // Reduced: within 50 nautical miles
-          minAltitude: 200, // Above 200 feet (exclude landed)
-        });
-
-        callbackRef.current(approachingFlights);
+        // Show all valid flights from the API (backend already filters by distance/altitude)
+        // Remove aggressive "approaching" filter for now to debug
+        callbackRef.current(validFlights);
         
         // Clear rate limit state on success
         if (rateLimitCallbackRef.current) {

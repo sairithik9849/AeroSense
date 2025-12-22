@@ -14,6 +14,7 @@ export const getFlights = async (req, res) => {
 
   try {
     const flights = await openskyService.getFlights(latNum, lngNum);
+    console.log(`[FlightController] Returning ${flights.length} flights`);
     res.json(flights);
   } catch (error) {
     // Handle rate limit errors specially

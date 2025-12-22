@@ -144,7 +144,7 @@ export const getFlights = async (lat, lng) => {
     const response = await apiClient.get(BASE_URL, {
       params: { lamin, lomin, lamax, lomax },
       headers,
-      timeout: 10000, // Increased timeout for OpenSky
+      timeout: 45000, // 45 second timeout for OpenSky (it can be slow)
     });
 
     console.log(`[OpenSky] API response status: ${response.status}`);
