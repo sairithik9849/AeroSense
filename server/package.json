@@ -1,0 +1,28 @@
+{
+  "name": "aerosense-server",
+  "version": "1.0.0",
+  "description": "",
+  "license": "ISC",
+  "author": "Sairithik Komuravelly",
+  "type": "module",
+  "main": "app.js",
+  "scripts": {
+    "test": "npx vitest run",
+    "dev": "nodemon app.js",
+    "start": "node app.js"
+  },
+  "dependencies": {
+    "@google/generative-ai": "^0.21.0",
+    "@upstash/redis": "^1.35.8",
+    "axios": "^1.13.2",
+    "cors": "^2.8.5",
+    "dotenv": "^17.2.3",
+    "express": "^5.2.1"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.11",
+    "supertest": "^7.1.4",
+    "vitest": "^4.0.16",
+    "zod": "^4.2.1"
+  }
+}

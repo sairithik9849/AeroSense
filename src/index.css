@@ -1,0 +1,37 @@
+@import "tailwindcss";
+
+@theme {
+  --color-background: #09090b;
+  --color-surface: #18181b;
+  --color-border: #27272a;
+
+  --color-safe: #10b981;
+  --color-caution: #f59e0b;
+  --color-danger: #ef4444;
+
+  --color-accent: #3b82f6;
+
+  --font-sans: Inter, system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", Menlo, monospace;
+}
+
+:root {
+  /* Force dark mode by default */
+  color-scheme: dark;
+}
+
+body {
+  @apply bg-background text-zinc-100 antialiased overflow-hidden;
+  /* overflow-hidden prevents scrollbars since the map is full screen */
+}
+
+/* Custom Scrollbar for the Sidebar */
+::-webkit-scrollbar {
+  width: 6px;
+}
+::-webkit-scrollbar-track {
+  @apply bg-surface;
+}
+::-webkit-scrollbar-thumb {
+  @apply bg-zinc-600 rounded-full;
+}
