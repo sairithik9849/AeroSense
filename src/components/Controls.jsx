@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Search, MapPin, Wind, Plane, Clock, Sparkles, Loader2, X, Thermometer, AlertTriangle, CheckCircle, ChevronDown, ChevronUp, Maximize2, Columns, BookOpen } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import About from './About';
+import { getApiEndpoint } from '../utils/api';
 
 // Expandable Section Component
 function ExpandableSection({ title, icon, content, defaultOpen = false }) {
@@ -68,7 +69,8 @@ export default function Controls({
     compareIndexA,
     setCompareIndexA,
     compareIndexB,
-    setCompareIndexB
+    setCompareIndexB,
+    onResetAll
 }) {
     const [results, setResults] = useState([]);
     const [analysis, setAnalysis] = useState(null);
@@ -131,7 +133,10 @@ export default function Controls({
             {/* Header: Title + About Button */}
             <div className="flex items-center justify-between px-1 gap-2">
                 <button 
-                    onClick={() => {
+                    onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        // Reset everything simultaneously
                         if (mapRef?.current) {
                             mapRef.current.flyTo({
                                 center: [-95, 40],
@@ -139,9 +144,10 @@ export default function Controls({
                                 duration: 1500
                             });
                         }
+                        onResetAll?.();
                     }}
                     className="flex items-center gap-2 md:gap-2.5 min-w-0 hover:opacity-80 transition-opacity"
-                    title="Zoom out to world view"
+                    title="Reset to world view"
                 >
                     <div className="p-1 md:p-1.5 bg-blue-500/20 rounded-lg border border-blue-500/30 shrink-0">
                         <Wind size={16} className="md:hidden text-blue-400" />
@@ -324,7 +330,7 @@ export default function Controls({
 
                                         setAnalysisLoading(true);
                                         try {
-                                            const res = await fetch(`/api/analyze?station=${selectedStation.id}`);
+                                            const res = await fetch(getApiEndpoint(`/api/analyze?station=${selectedStation.id}`));
                                             if (res.ok) {
                                                 const data = await res.json();
                                                 setAnalysis(data);

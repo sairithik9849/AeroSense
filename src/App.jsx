@@ -5,6 +5,7 @@ import Controls from './components/Controls';
 import WindOverlay from './components/WindOverlay';
 import FlightOverlay from './components/FlightOverlay';
 import FlightInfoPanel from './components/FlightInfoPanel';
+import { getApiEndpoint } from './utils/api';
 
 export default function App() {
   const [stations, setStations] = useState([]);
@@ -54,7 +55,7 @@ export default function App() {
 
   // 1. Fetch Stations Once at Top Level
   useEffect(() => {
-    fetch("/api/stations")
+    fetch(getApiEndpoint("/api/stations"))
       .then((res) => res.json())
       .then((data) => setStations(data))
       .catch((err) => console.error("Failed to load stations:", err));
@@ -106,7 +107,7 @@ export default function App() {
 
     const fetchWeather = async () => {
       try {
-        const res = await fetch(`/api/weather?station=${selectedStation.id}`);
+        const res = await fetch(getApiEndpoint(`/api/weather?station=${selectedStation.id}`));
         if (res.ok) {
           const data = await res.json();
           setWeatherData(data);
@@ -200,7 +201,7 @@ export default function App() {
   const handleRefreshWeather = async () => {
     if (!selectedStation || !selectedStation.id) return;
     try {
-      const res = await fetch(`/api/weather?station=${selectedStation.id}`);
+      const res = await fetch(getApiEndpoint(`/api/weather?station=${selectedStation.id}`));
       if (res.ok) {
         const data = await res.json();
         setWeatherData(data);
@@ -236,6 +237,17 @@ export default function App() {
         setCompareIndexA={setCompareIndexA}
         compareIndexB={compareIndexB}
         setCompareIndexB={setCompareIndexB}
+        onResetAll={() => {
+          setSelectedStation(null);
+          setSelectedFlight(null);
+          setSearchQuery('');
+          setTimeIndex(-1);
+          setCompareEnabled(false);
+          setCompareIndexA(null);
+          setCompareIndexB(null);
+          setWeatherData(null);
+          setFlights([]);
+        }}
       />
 
       {/* Wind Overlay (Only when weather data exists) */}

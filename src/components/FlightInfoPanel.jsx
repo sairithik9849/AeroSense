@@ -215,10 +215,10 @@ export default function FlightInfoPanel({ flight, clickPoint, onClose }) {
               <p className="text-xs text-zinc-400 uppercase tracking-wider font-semibold">Position</p>
             </div>
             <p className="text-xs font-mono text-white">
-              {flight.lat.toFixed(4)}°N
+              {Math.abs(flight.lat).toFixed(4)}°{flight.lat >= 0 ? 'N' : 'S'}
             </p>
             <p className="text-xs font-mono text-white">
-              {flight.lng.toFixed(4)}°E
+              {Math.abs(flight.lng).toFixed(4)}°{flight.lng >= 0 ? 'E' : 'W'}
             </p>
           </div>
         </div>

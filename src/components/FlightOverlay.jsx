@@ -1,5 +1,6 @@
 import { useEffect, useRef, useImperativeHandle, forwardRef, useCallback } from 'react';
 import { filterApproachingFlights } from '../utils/aviation';
+import { getApiEndpoint } from '../utils/api';
 
 const FlightOverlay = forwardRef(({ station, onFlightsUpdate, onRateLimit }, ref) => {
   const abortControllerRef = useRef(null);
@@ -28,7 +29,7 @@ const FlightOverlay = forwardRef(({ station, onFlightsUpdate, onRateLimit }, ref
     const signal = abortControllerRef.current.signal;
 
     try {
-      const res = await fetch(`/api/flights?lat=${station.lat}&lng=${station.lng}`, {
+      const res = await fetch(getApiEndpoint(`/api/flights?lat=${station.lat}&lng=${station.lng}`), {
         signal
       });
 

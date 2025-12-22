@@ -45,7 +45,14 @@ app.use((err, req, res) => {
   res.status(500).json({ error: err.message || "Internal Server Error" });
 });
 
-app.listen(3000, () => {
-  console.log("We've now got a server!");
-  console.log("Your routes will be running on http://localhost:3000");
-});
+// Export for serverless (Vercel) and local development
+// Only start listening when running directly (not imported by Vercel)
+const isVercel = process.env.VERCEL === '1' || process.env.VERCEL === 'true';
+if (!isVercel) {
+  app.listen(3000, () => {
+    console.log("We've now got a server!");
+    console.log("Your routes will be running on http://localhost:3000");
+  });
+}
+
+export default app;
