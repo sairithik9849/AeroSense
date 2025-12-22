@@ -158,20 +158,23 @@ const tryFetchOpenSky = async (lat, lng) => {
   }
 
   // Method 3: Try proxy services (with auth embedded in URL)
-  const openSkyUrl = buildAuthenticatedOpenSkyUrl(lamin, lomin, lamax, lomax);
-  console.log(`[OpenSky] Using authenticated URL for proxies: ${openSkyUrl.includes('@') ? 'YES' : 'NO'}`);
+  const openSkyUrlWithAuth = buildAuthenticatedOpenSkyUrl(lamin, lomin, lamax, lomax);
+  const openSkyUrlNoAuth = buildOpenSkyUrl(lamin, lomin, lamax, lomax);
+  console.log(`[OpenSky] Using authenticated URL for proxies: ${openSkyUrlWithAuth.includes('@') ? 'YES' : 'NO'}`);
   
+  // Try each proxy with both auth and no-auth URLs
   for (const proxy of PROXY_SERVICES) {
+    // First try without auth in URL (some proxies break with @ symbol)
     try {
-      console.log(`[OpenSky] Trying Method 3: ${proxy.name} proxy...`);
-      const proxyUrl = proxy.getUrl(openSkyUrl);
+      console.log(`[OpenSky] Trying Method 3: ${proxy.name} proxy (no URL auth)...`);
+      const proxyUrl = proxy.getUrl(openSkyUrlNoAuth);
       
       const response = await axios.get(proxyUrl, {
         headers: {
           ...browserHeaders,
           ...(authHeader ? { 'Authorization': authHeader } : {}),
         },
-        timeout: 15000, // Shorter timeout to fit Vercel limits
+        timeout: 15000,
         validateStatus: (status) => status < 500,
       });
       
@@ -183,6 +186,9 @@ const tryFetchOpenSky = async (lat, lng) => {
         
         // If response is a string, try to parse it as JSON
         if (typeof data === 'string') {
+          // Log first 500 chars to debug what we're getting
+          console.log(`[OpenSky] ${proxy.name} raw response (first 500 chars): ${data.substring(0, 500)}`);
+          
           try {
             data = JSON.parse(data);
             console.log(`[OpenSky] ${proxy.name} parsed string response to JSON`);
@@ -215,6 +221,54 @@ const tryFetchOpenSky = async (lat, lng) => {
   // Skip Methods 4 and 5 (global fetch) - they take too long and hit Vercel timeout
   // Direct requests to OpenSky are being blocked from Vercel IPs
   console.log('[OpenSky] Skipping global fetch methods (would exceed Vercel timeout)');
+
+  // Method 4: Try ADS-B Exchange as fallback (free, more permissive)
+  try {
+    console.log('[OpenSky] Trying Method 4: ADS-B Exchange API fallback...');
+    
+    // ADS-B Exchange public API - uses different format
+    const adsbUrl = `https://api.adsb.lol/v2/lat/${lat}/lon/${lng}/dist/50`;
+    
+    const response = await axios.get(adsbUrl, {
+      headers: browserHeaders,
+      timeout: 15000,
+      validateStatus: (status) => status < 500,
+    });
+    
+    console.log(`[OpenSky] ADS-B Exchange response status: ${response.status}`);
+    
+    if (response.status === 200 && response.data && response.data.ac) {
+      console.log(`[OpenSky] ADS-B Exchange SUCCESS! Found ${response.data.ac.length} aircraft`);
+      
+      // Convert ADS-B Exchange format to OpenSky format
+      const states = response.data.ac.map(ac => [
+        ac.hex || '',           // 0: icao24
+        ac.flight?.trim() || ac.r || '', // 1: callsign
+        ac.country || '',       // 2: origin_country
+        null,                   // 3: time_position
+        null,                   // 4: last_contact
+        ac.lon,                 // 5: longitude
+        ac.lat,                 // 6: latitude
+        ac.alt_baro ? ac.alt_baro * 0.3048 : null, // 7: baro_altitude (convert ft to m)
+        ac.ground === 1,        // 8: on_ground
+        ac.gs ? ac.gs * 0.514444 : null, // 9: velocity (convert knots to m/s)
+        ac.track,               // 10: true_track
+        ac.baro_rate ? ac.baro_rate * 0.00508 : null, // 11: vertical_rate
+        null,                   // 12: sensors
+        ac.alt_geom ? ac.alt_geom * 0.3048 : null, // 13: geo_altitude
+        ac.squawk || null,      // 14: squawk
+        false,                  // 15: spi
+        0,                      // 16: position_source
+      ]);
+      
+      return { time: Date.now(), states };
+    }
+    throw new Error(`ADS-B Exchange returned status ${response.status}`);
+  } catch (error) {
+    const errMsg = error.code || error.message;
+    console.log(`[OpenSky] ADS-B Exchange failed: ${errMsg}`);
+    errors.push({ method: 'adsb-exchange', error: errMsg });
+  }
 
   // All methods failed
   console.error('[OpenSky] All methods failed:', JSON.stringify(errors, null, 2));
