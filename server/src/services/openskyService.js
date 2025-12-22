@@ -3,74 +3,26 @@ import { OpenSkyResponseSchema } from '../utils/validation.js';
 import process from 'node:process';
 
 const BASE_URL = 'https://opensky-network.org/api/states/all';
-const TOKEN_URL = 'https://auth.opensky-network.org/auth/realms/opensky-network/protocol/openid-connect/token';
-
-// Cache token to avoid requesting it on every call
-let cachedToken = null;
-let tokenExpiry = 0;
 
 /**
- * Get OAuth2 access token from OpenSky Network
- * Uses client credentials flow and caches the token
+ * Get Basic Auth header for OpenSky Network
+ * OpenSky REST API supports Basic Authentication
  */
-const getAccessToken = async () => {
-  // Return cached token if still valid (with 5 minute buffer)
-  if (cachedToken && Date.now() < tokenExpiry) {
-    console.log('[OpenSky] Using cached authentication token');
-    return cachedToken;
-  }
+const getAuthHeader = () => {
+  const username = process.env.OPENSKY_CLIENT_ID;
+  const password = process.env.OPENSKY_CLIENT_SECRET;
 
-  const clientId = process.env.OPENSKY_CLIENT_ID;
-  const clientSecret = process.env.OPENSKY_CLIENT_SECRET;
+  console.log('[OpenSky] Checking credentials - Username:', username ? 'SET' : 'NOT SET', 'Password:', password ? 'SET' : 'NOT SET');
 
-  console.log('[OpenSky] Checking credentials - Client ID:', clientId ? 'SET' : 'NOT SET', 'Client Secret:', clientSecret ? 'SET' : 'NOT SET');
-
-  if (!clientId || !clientSecret) {
-    // No credentials provided, use anonymous access
-    console.log('[OpenSky] No API credentials found in environment variables - using anonymous access');
+  if (!username || !password) {
+    console.log('[OpenSky] No API credentials found - using anonymous access');
     return null;
   }
 
-  console.log('[OpenSky] Attempting to authenticate with API credentials...');
-
-  try {
-    // OpenSky uses form-urlencoded for token requests
-    const params = new URLSearchParams();
-    params.append('grant_type', 'client_credentials');
-    params.append('client_id', clientId);
-    params.append('client_secret', clientSecret);
-
-    const response = await apiClient.post(TOKEN_URL, params.toString(), {
-      headers: {
-        'Content-Type': 'application/x-www-form-urlencoded',
-      },
-      timeout: 10000,
-    });
-
-    if (!response.data || !response.data.access_token) {
-      console.error('[OpenSky] Token response missing access_token:', response.data);
-      return null;
-    }
-
-    cachedToken = response.data.access_token;
-    // Token typically expires in 3600 seconds (1 hour), cache for 55 minutes to be safe
-    const expiresIn = response.data.expires_in || 3600;
-    tokenExpiry = Date.now() + (expiresIn - 300) * 1000; // 5 minute buffer
-    
-    console.log('[OpenSky] Successfully authenticated with API credentials');
-    console.log('[OpenSky] Token expires in:', expiresIn, 'seconds');
-    return cachedToken;
-  } catch (error) {
-    console.error('[OpenSky] Failed to authenticate:', error.message);
-    if (error.response) {
-      console.error('[OpenSky] Auth error status:', error.response.status);
-      console.error('[OpenSky] Auth error data:', error.response.data);
-    }
-    // Clear invalid token cache
-    cachedToken = null;
-    tokenExpiry = 0;
-    return null;
-  }
+  // Use Basic Auth (more reliable than OAuth for OpenSky)
+  const credentials = Buffer.from(`${username}:${password}`).toString('base64');
+  console.log('[OpenSky] Using Basic Auth with provided credentials');
+  return `Basic ${credentials}`;
 };
 
 /**
@@ -128,16 +80,12 @@ export const getFlights = async (lat, lng) => {
   console.log(`[OpenSky] Bounding box: lat [${lamin}, ${lamax}], lng [${lomin}, ${lomax}]`);
 
   try {
-    // Get access token if credentials are available
-    console.log(`[OpenSky] Checking for credentials...`);
-    const token = await getAccessToken();
+    // Get Basic Auth header if credentials are available
+    const authHeader = getAuthHeader();
     
     const headers = {};
-    if (token) {
-      headers['Authorization'] = `Bearer ${token}`;
-      console.log(`[OpenSky] Using authenticated request with Bearer token`);
-    } else {
-      console.log(`[OpenSky] Using anonymous access (no token available)`);
+    if (authHeader) {
+      headers['Authorization'] = authHeader;
     }
 
     console.log(`[OpenSky] Making API request to ${BASE_URL}...`);
