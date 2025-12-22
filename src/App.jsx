@@ -151,6 +151,9 @@ export default function App() {
   };
 
   const handleFlightSelect = (flight, clickPoint) => {
+    // Ensure flights are visible when a flight is selected
+    setShowFlights(true);
+    
     // If clickPoint is provided (clicked on map), use it directly
     if (clickPoint) {
       setSelectedFlight({ flight, clickPoint });
