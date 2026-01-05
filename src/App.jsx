@@ -5,9 +5,16 @@ import Controls from './components/Controls';
 import WindOverlay from './components/WindOverlay';
 import FlightOverlay from './components/FlightOverlay';
 import FlightInfoPanel from './components/FlightInfoPanel';
+import Landing from './components/Landing';
 import { getApiEndpoint } from './utils/api';
 
 export default function App() {
+  const [showLanding, setShowLanding] = useState(() => {
+    // Check if user has visited before
+    const hasVisited = localStorage.getItem('aerosense-visited');
+    return !hasVisited;
+  });
+  
   const [stations, setStations] = useState([]);
   const [selectedStation, setSelectedStation] = useState(null);
   const [weatherData, setWeatherData] = useState(null);
@@ -215,8 +222,77 @@ export default function App() {
     }
   };
 
+  const [isTransitioning, setIsTransitioning] = useState(false);
+
+  const handleEnterApp = () => {
+    localStorage.setItem('aerosense-visited', 'true');
+    setShowLanding(false);
+  };
+
+  const handleReturnToLanding = () => {
+    setIsTransitioning(true);
+    
+    // Animate map zoom out and spin
+    if (mapRef.current) {
+      mapRef.current.flyTo({
+        center: [0, 20],
+        zoom: 1.5,
+        pitch: 0,
+        bearing: 180,
+        duration: 900,
+        essential: true
+      });
+    }
+    
+    // Transition to landing page after animation
+    setTimeout(() => {
+      setShowLanding(true);
+      setIsTransitioning(false);
+      // Reset map state
+      setSelectedStation(null);
+      setSelectedFlight(null);
+      setSearchQuery('');
+      setTimeIndex(-1);
+      setWeatherData(null);
+    }, 900);
+  };
+
+  // Animate map entrance after landing is dismissed (match globe->landing style)
+  useEffect(() => {
+    if (!showLanding) {
+      // Start from a global view with spin, then fly into the map
+      const setupTimer = setTimeout(() => {
+        if (mapRef.current) {
+          mapRef.current.jumpTo({
+            center: [0, 20],
+            zoom: 1.5,
+            pitch: 0,
+            bearing: 180
+          });
+          mapRef.current.flyTo({
+            center: [-95, 40],
+            zoom: 3,
+            pitch: 0,
+            bearing: 0,
+            duration: 900,
+            essential: true
+          });
+        }
+      }, 100);
+
+      return () => {
+        clearTimeout(setupTimer);
+      };
+    }
+  }, [showLanding]);
+
+  // Show landing page if first visit
+  if (showLanding) {
+    return <Landing onEnter={handleEnterApp} />;
+  }
+
   return (
-    <div className="h-screen w-screen bg-zinc-950 relative overflow-hidden font-sans selection:bg-blue-500/30">
+    <div className={`h-screen w-screen bg-zinc-950 relative overflow-hidden font-sans selection:bg-blue-500/30 transition-opacity duration-700 ${isTransitioning ? 'opacity-0' : 'opacity-100'}`}>
 
       {/* Floating Controls + Time Slider */}
       <Controls
@@ -237,6 +313,7 @@ export default function App() {
         setCompareIndexA={setCompareIndexA}
         compareIndexB={compareIndexB}
         setCompareIndexB={setCompareIndexB}
+        onReturnToLanding={handleReturnToLanding}
         onResetAll={() => {
           setSelectedStation(null);
           setSelectedFlight(null);

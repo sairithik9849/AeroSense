@@ -74,8 +74,8 @@ export default function About({ onClose }) {
   ];
 
   return (
-    <div className="fixed inset-0 z-100 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
-      <div className="bg-zinc-900 border border-zinc-700 rounded-xl shadow-2xl w-full max-w-5xl max-h-[90vh] flex flex-col overflow-hidden">
+    <div className="fixed inset-0 z-100 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-fade-in">
+      <div className="bg-zinc-900 border border-zinc-700 rounded-xl shadow-2xl w-full max-w-5xl max-h-[90vh] flex flex-col overflow-hidden animate-modal-in">
         {/* Header */}
         <div className="p-4 border-b border-zinc-700 flex items-center justify-between bg-linear-to-r from-blue-500/10 to-cyan-500/10">
           <div className="flex items-center gap-3">

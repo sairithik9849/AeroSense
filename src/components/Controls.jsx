@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { Search, MapPin, Wind, Plane, Clock, Sparkles, Loader2, X, Thermometer, AlertTriangle, CheckCircle, ChevronDown, ChevronUp, Maximize2, Columns, BookOpen, Info } from 'lucide-react';
+import React, { useState, useEffect, useRef } from 'react';
+import { Search, MapPin, Wind, Plane, Clock, Sparkles, Loader2, X, Thermometer, AlertTriangle, CheckCircle, ChevronDown, ChevronUp, Maximize2, Columns, BookOpen, Info, Github, Home } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import About from './About';
 import { getApiEndpoint } from '../utils/api';
@@ -70,6 +70,7 @@ export default function Controls({
     setCompareIndexA,
     compareIndexB,
     setCompareIndexB,
+    onReturnToLanding,
     onResetAll
 }) {
     const [results, setResults] = useState([]);
@@ -78,6 +79,27 @@ export default function Controls({
     const [showAnalysis, setShowAnalysis] = useState(false);
     const [showAnalysisModal, setShowAnalysisModal] = useState(false);
     const [showAbout, setShowAbout] = useState(false);
+    const [shortcutLabel, setShortcutLabel] = useState('Ctrl + K');
+    const searchInputRef = useRef(null);
+
+    useEffect(() => {
+        const isMac = typeof navigator !== 'undefined' && /mac|ipod|iphone|ipad/i.test(navigator.userAgent);
+        setShortcutLabel(isMac ? 'Cmd + K' : 'Ctrl + K');
+
+        const handleShortcut = (e) => {
+            const key = e.key?.toLowerCase();
+            const isShortcut = (isMac && e.metaKey && key === 'k') || (!isMac && e.ctrlKey && key === 'k');
+            if (isShortcut) {
+                e.preventDefault();
+                if (searchInputRef.current) {
+                    searchInputRef.current.focus();
+                    searchInputRef.current.select();
+                }
+            }
+        };
+        window.addEventListener('keydown', handleShortcut);
+        return () => window.removeEventListener('keydown', handleShortcut);
+    }, []);
 
     // Clear analysis when station changes
     useEffect(() => {
@@ -128,7 +150,7 @@ export default function Controls({
 
     return (
         <>
-        <div className="absolute top-2 left-2 right-2 md:right-auto md:w-96 z-50 flex flex-col gap-2 md:gap-3 font-sans max-h-[90vh] overflow-y-auto">
+        <div className="absolute top-2 left-2 right-2 md:right-auto md:w-96 z-50 flex flex-col gap-2 md:gap-3 font-sans max-h-[90vh] overflow-y-auto no-scrollbar">
 
             {/* Header: Title + About Button */}
             <div className="flex items-center justify-between px-1 gap-2">
@@ -157,31 +179,65 @@ export default function Controls({
                         AeroSense
                     </h1>
                 </button>
-                <button
-                    onClick={() => setShowAbout(true)}
-                    className="p-2 rounded-lg border border-zinc-700/60 bg-zinc-900/90 backdrop-blur-md text-zinc-400 hover:text-blue-300 hover:border-blue-500/50 transition-all shrink-0"
-                    title="Learn more about AeroSense"
-                >
-                    <BookOpen size={16} className="md:hidden" />
-                    <BookOpen size={18} className="hidden md:block" />
-                </button>
+                <div className="flex items-center gap-2">
+                    <button
+                        onClick={onReturnToLanding}
+                        className="p-2 rounded-lg border border-zinc-700/60 bg-zinc-900/90 backdrop-blur-md text-zinc-400 hover:text-blue-300 hover:border-blue-500/50 transition-all shrink-0"
+                        title="Return to landing page"
+                    >
+                        <Home size={16} className="md:hidden" />
+                        <Home size={18} className="hidden md:block" />
+                    </button>
+                    <a
+                        href="https://github.com/sairithik9849/AeroSense"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="p-2 rounded-lg border border-zinc-700/60 bg-zinc-900/90 backdrop-blur-md text-zinc-400 hover:text-blue-300 hover:border-blue-500/50 transition-all shrink-0"
+                        title="View on GitHub"
+                    >
+                        <Github size={16} className="md:hidden" />
+                        <Github size={18} className="hidden md:block" />
+                    </a>
+                    <button
+                        onClick={() => setShowAbout(true)}
+                        className="p-2 rounded-lg border border-zinc-700/60 bg-zinc-900/90 backdrop-blur-md text-zinc-400 hover:text-blue-300 hover:border-blue-500/50 transition-all shrink-0"
+                        title="Learn more about AeroSense"
+                    >
+                        <BookOpen size={16} className="md:hidden" />
+                        <BookOpen size={18} className="hidden md:block" />
+                    </button>
+                </div>
             </div>
 
             {/* Search Bar */}
             <div className="relative group">
-                <div className="absolute inset-y-0 left-3 flex items-center pointer-events-none text-zinc-500 group-focus-within:text-blue-400 transition-colors">
-                    <Search size={16} className="md:hidden" />
-                    <Search size={18} className="hidden md:block" />
+                {/* Outer glow */}
+                <div className="absolute inset-0 rounded-2xl bg-linear-to-r from-blue-500/30 via-blue-400/20 to-transparent opacity-0 group-focus-within:opacity-100 transition-opacity duration-300 blur" />
+
+                <div className="relative w-full rounded-2xl bg-zinc-950/85 border border-zinc-700/60 backdrop-blur-2xl shadow-[0_12px_45px_-20px_rgba(59,130,246,0.5)] overflow-hidden transition-all duration-200 hover:border-blue-500/40">
+                    {/* Inner stroke */}
+                    <div className="pointer-events-none absolute inset-px rounded-[14px] border border-white/5" />
+
+                    <div className="absolute inset-y-0 left-4 flex items-center pointer-events-none text-zinc-500 group-focus-within:text-blue-200 transition-colors">
+                        <Search size={18} />
+                    </div>
+
+                    <input
+                        ref={searchInputRef}
+                        type="text"
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                        placeholder="Search stations or IDs"
+                        className="w-full bg-transparent text-white text-sm md:text-base pl-12 pr-28 py-3.5 rounded-2xl focus:outline-none focus:ring-4 focus:ring-blue-500/18 placeholder:text-zinc-500 transition-all"
+                    />
+
+                    {/* Right controls */}
+                    <div className="absolute inset-y-0 right-3 flex items-center">
+                        <span className="px-3 py-1.5 text-[11px] leading-none rounded-xl border border-blue-500/45 bg-linear-to-r from-blue-600/30 via-blue-500/25 to-blue-400/20 text-blue-50 shadow-[0_6px_18px_-10px_rgba(59,130,246,0.9)] select-none">
+                            {shortcutLabel}
+                        </span>
+                    </div>
                 </div>
-                <input
-                    type="text"
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    placeholder="Search..."
-                    className="w-full bg-zinc-900/90 backdrop-blur-md border border-zinc-700/60 text-white text-sm md:text-base pl-9 md:pl-10 pr-3 md:pr-4 py-2 md:py-3 rounded-lg md:rounded-xl shadow-lg focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500/50 transition-all placeholder:text-zinc-500 hover:bg-zinc-900 hover:border-zinc-600/80"
-                />
-                {/* Search icon background accent */}
-                <div className="absolute inset-y-0 left-0 w-9 md:w-10 bg-linear-to-r from-blue-500/5 to-transparent rounded-l-lg md:rounded-l-xl pointer-events-none group-focus-within:from-blue-500/10 transition-colors" />
             </div>
 
             {/* Time Travel Controls (Optimized for Visibility) */}
