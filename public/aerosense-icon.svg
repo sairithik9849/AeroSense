@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-labelledby="title desc">
+  <title id="title">AeroSense Icon</title>
+  <desc id="desc">Yellow flight symbol over a wind-textured background</desc>
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0b1220" />
+      <stop offset="60%" stop-color="#0d1f36" />
+      <stop offset="100%" stop-color="#0a2c46" />
+    </linearGradient>
+    <linearGradient id="wind" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#7dd3fc" stop-opacity="0.2" />
+      <stop offset="50%" stop-color="#38bdf8" stop-opacity="0.35" />
+      <stop offset="100%" stop-color="#7dd3fc" stop-opacity="0.2" />
+    </linearGradient>
+    <linearGradient id="plane" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#facc15" />
+      <stop offset="100%" stop-color="#f59e0b" />
+    </linearGradient>
+  </defs>
+  <rect x="24" y="24" width="464" height="464" rx="96" fill="url(#bg)" />
+  <g fill="none" stroke-linecap="round" stroke="url(#wind)" stroke-width="18">
+    <path d="M76 212c62-32 136-22 192 6 58 30 122 30 168 16" />
+    <path d="M108 276c48-22 108-14 156 10 40 20 102 34 160 10" />
+    <path d="M96 152c64-18 130-6 188 18 42 18 98 24 152 6" stroke-opacity="0.6" />
+  </g>
+  <g transform="translate(40 40) scale(18)">
+    <path fill="url(#plane)" d="M17.8 19.2 16 11l3.5-3.5C21 6 21.5 4 21 3c-1-.5-3 0-4.5 1.5L13 8 4.8 6.2c-.5-.1-.9.1-1.1.5l-.3.5c-.2.5-.1 1 .3 1.3L9 12l-2 3H4l-1 1 3 2 2 3 1-1v-3l3-2 3.5 5.3c.3.4.8.5 1.3.3l.5-.2c.4-.3.6-.7.5-1.2z" />
+  </g>
+</svg>
