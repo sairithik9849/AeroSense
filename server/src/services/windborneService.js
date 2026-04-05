@@ -1,9 +1,18 @@
 import apiClient from '../utils/apiClient.js';
-import { getCache, setCache } from '../utils/cache.js';
+import { getCache, getStaleCache, setCache, setStaleCache } from '../utils/cache.js';
 import { StationSchema, WeatherResponseSchema } from '../utils/validation.js';
 import { z } from 'zod';
 
 const BASE_URL = 'https://sfc.windbornesystems.com';
+
+const createProviderUnavailableError = (message, cause = null) => {
+  const error = new Error(message);
+  error.code = 'WINDBORNE_UNAVAILABLE';
+  if (cause) {
+    error.cause = cause;
+  }
+  return error;
+};
 
 export const getStations = async () => {
   const cacheKey = 'windborne:stations';
@@ -23,10 +32,18 @@ export const getStations = async () => {
     console.log('Stations validated successfully');
     
     await setCache(cacheKey, stations, 86400); // 24 hours
+    await setStaleCache(cacheKey, stations); // 7 days backup for provider outages
     return stations;
   } catch (error) {
     console.error('Error fetching stations:', error.message);
-    throw new Error('Failed to fetch stations');
+
+    const staleStations = await getStaleCache(cacheKey);
+    if (staleStations) {
+      console.warn('Using stale WindBorne station cache due to upstream outage');
+      return staleStations;
+    }
+
+    throw createProviderUnavailableError('WindBorne station service unavailable', error);
   }
 };
 
@@ -89,7 +106,9 @@ export const getHistoricalWeather = async (stationId) => {
       }
       
       if (status === 429) {
-        throw new Error('Rate limit exceeded');
+        const rateLimitError = new Error('Rate limit exceeded');
+        rateLimitError.code = 'RATE_LIMIT_EXCEEDED';
+        throw rateLimitError;
       }
       
       // Handle 404 (Not Found) and 400 (Bad Request - e.g. invalid ID)
@@ -97,16 +116,21 @@ export const getHistoricalWeather = async (stationId) => {
         console.warn(`Station ${stationId} not found or invalid (Status: ${status}).`);
         return null; // Return null to indicate no data
       }
+
+      if (status >= 500) {
+        throw createProviderUnavailableError(`WindBorne weather service unavailable (${status})`, error);
+      }
     } else if (error.name === 'SyntaxError' || error.message.includes('JSON')) {
       // Handle JSON parsing errors specifically
       console.error(`JSON parsing error for ${stationId}:`, error.message);
-      throw new Error(`Invalid response format from API: ${error.message}`);
+      throw createProviderUnavailableError(`Invalid response format from API: ${error.message}`, error);
     } else {
       console.error(`Network/Code Error for ${stationId}:`, error.message);
+      throw createProviderUnavailableError(`WindBorne weather request failed: ${error.message}`, error);
     }
     
     // Include timestamp to verify code update
     const timestamp = new Date().toISOString();
-    throw new Error(`Failed to fetch weather data: ${error.message} (Time: ${timestamp})`);
+    throw createProviderUnavailableError(`Failed to fetch weather data: ${error.message} (Time: ${timestamp})`, error);
   }
 };

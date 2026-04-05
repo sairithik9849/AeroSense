@@ -7,6 +7,13 @@ export const getAllStations = async (req, res, next) => {
     res.setHeader('Cache-Control', 's-maxage=86400');
     res.json(stations);
   } catch (error) {
+    if (error.code === 'WINDBORNE_UNAVAILABLE') {
+      return res.status(503).json({
+        error: 'Station service temporarily unavailable',
+        degraded: true,
+        source: 'WindBorne',
+      });
+    }
     next(error);
   }
 };

@@ -11,6 +11,7 @@ export const analyzeStation = async (req, res, next) => {
   try {
     // Get station info
     let stationInfo = null;
+    let stationEnrichmentFailed = false;
     try {
       const stations = await windborneService.getStations();
       const stationData = stations.find(s => s.station_id === station);
@@ -24,10 +25,17 @@ export const analyzeStation = async (req, res, next) => {
       }
     } catch (err) {
       console.warn(`Could not fetch station info for ${station}:`, err.message);
+      stationEnrichmentFailed = true;
     }
 
     if (!stationInfo) {
-      return res.status(404).json({ error: 'Station not found' });
+      stationInfo = {
+        id: station,
+        name: station,
+        lat: null,
+        lng: null,
+        estimated: true,
+      };
     }
 
     // Get all historical weather data
@@ -38,7 +46,10 @@ export const analyzeStation = async (req, res, next) => {
     );
 
     if (!weatherData || !weatherData.points || weatherData.points.length === 0) {
-      return res.status(404).json({ error: 'No weather data available for this station' });
+      return res.status(503).json({
+        error: 'No weather data available right now. Upstream providers may be unavailable.',
+        degraded: true,
+      });
     }
 
     // Analyze with Gemini
@@ -48,7 +59,15 @@ export const analyzeStation = async (req, res, next) => {
       weatherData.current
     );
 
-    res.json(analysis);
+    res.json({
+      ...analysis,
+      degraded: Boolean(weatherData?.degraded || stationEnrichmentFailed),
+      degradedReasons: [
+        ...(Array.isArray(weatherData?.degradedReasons) ? weatherData.degradedReasons : []),
+        ...(stationEnrichmentFailed ? ['STATION_ENRICHMENT_UNAVAILABLE'] : []),
+      ],
+      stationEnrichmentFailed,
+    });
   } catch (error) {
     if (error.message.includes('GEMINI_API_KEY')) {
       return res.status(500).json({ 

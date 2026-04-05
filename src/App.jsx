@@ -55,7 +55,7 @@ export default function App() {
         zoom: windAnimationPaused ? 9 : 12,
         duration: 800
       });
-    } catch (e) {
+    } catch {
       // ignore zoom errors
     }
   }, [windAnimationPaused, selectedStation]);
@@ -64,7 +64,15 @@ export default function App() {
   useEffect(() => {
     fetch(getApiEndpoint("/api/stations"))
       .then((res) => res.json())
-      .then((data) => setStations(data))
+      .then((data) => {
+        if (Array.isArray(data)) {
+          setStations(data);
+          return;
+        }
+
+        console.warn('Stations API returned non-array payload:', data);
+        setStations([]);
+      })
       .catch((err) => console.error("Failed to load stations:", err));
   }, []);
 

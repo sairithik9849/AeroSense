@@ -42,6 +42,8 @@ export default function Sidebar({ station, onClose, weather: propWeather, timeIn
   const metarAttempted = propWeather?.metarAttempted || false;
   const metarUnavailable = propWeather?.metarUnavailable || false;
   const metarIcaoCode = propWeather?.metarIcaoCode || null;
+  const degraded = propWeather?.degraded || false;
+  const degradedReasons = Array.isArray(propWeather?.degradedReasons) ? propWeather.degradedReasons : [];
 
   // 2. Calculate wind safely. If no 'current', wind is null.
   const wind = current ? getWindData(current.wind_x, current.wind_y) : null;
@@ -144,6 +146,21 @@ export default function Sidebar({ station, onClose, weather: propWeather, timeIn
               </div>
             </div>
           )}
+
+        {degraded && (
+          <div className="mt-3 p-2 bg-amber-500/10 border border-amber-500/30 rounded text-xs text-amber-300 flex items-start gap-2">
+            <AlertTriangle size={14} className="mt-0.5 shrink-0" />
+            <div>
+              <p className="font-semibold">Degraded data mode</p>
+              <p className="text-[10px] opacity-90">
+                Some providers are temporarily unavailable. Showing best available weather data.
+              </p>
+              {degradedReasons.length > 0 && (
+                <p className="text-[10px] opacity-80 mt-1">Reasons: {degradedReasons.join(', ')}</p>
+              )}
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Content Container */}

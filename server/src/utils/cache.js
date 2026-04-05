@@ -25,11 +25,35 @@ export const getCache = async (key) => {
   return null;
 };
 
+export const getStaleCache = async (key) => {
+  const staleKey = `${key}:stale`;
+
+  if (redis) {
+    return await redis.get(staleKey);
+  }
+
+  const item = memoryCache.get(staleKey);
+  return item ? item.data : null;
+};
+
 export const setCache = async (key, data, ttlSeconds) => {
   if (redis) {
     await redis.set(key, data, { ex: ttlSeconds });
   } else {
     memoryCache.set(key, {
+      data,
+      expiry: Date.now() + ttlSeconds * 1000,
+    });
+  }
+};
+
+export const setStaleCache = async (key, data, ttlSeconds = 604800) => {
+  const staleKey = `${key}:stale`;
+
+  if (redis) {
+    await redis.set(staleKey, data, { ex: ttlSeconds });
+  } else {
+    memoryCache.set(staleKey, {
       data,
       expiry: Date.now() + ttlSeconds * 1000,
     });

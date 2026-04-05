@@ -47,7 +47,7 @@ const getMostRecentWindBornePoint = (windborneData) => {
  * @param {Object} metarMetadata - METAR attempt metadata
  * @returns {Object} - Unified weather response
  */
-const mergeWeatherData = (metarData, windborneData, stationId, metarMetadata = {}) => {
+const mergeWeatherData = (metarData, windborneData, stationId, metarMetadata = {}, windborneMetadata = {}) => {
   const metarAge = metarData ? calculateDataAge(metarData.timestamp) : null;
   const windborneLatest = getMostRecentWindBornePoint(windborneData);
 
@@ -102,11 +102,22 @@ const mergeWeatherData = (metarData, windborneData, stationId, metarMetadata = {
     metarAttempted: metarMetadata.metarAttempted || false,
     metarUnavailable: metarMetadata.metarUnavailable || false,
     metarIcaoCode: metarMetadata.metarIcaoCode || null,
+    windborneAttempted: windborneMetadata.windborneAttempted || false,
+    windborneUnavailable: windborneMetadata.windborneUnavailable || false,
   };
 
-  // If we have METAR, add it as the most recent point
-  if (metarData && metarAge !== null && metarAge < 30) {
-    // Add METAR point to the beginning of points array (most recent)
+  const degradedReasons = [];
+  if (response.metarAttempted && response.metarUnavailable) {
+    degradedReasons.push('METAR_UNAVAILABLE');
+  }
+  if (response.windborneAttempted && response.windborneUnavailable) {
+    degradedReasons.push('WINDBORNE_UNAVAILABLE');
+  }
+  response.degraded = degradedReasons.length > 0;
+  response.degradedReasons = degradedReasons;
+
+  // Add METAR point to the series whenever available.
+  if (metarData) {
     response.points = [
       ...(windborneData?.points || []),
       {
@@ -141,6 +152,8 @@ export const getUnifiedWeather = async (stationId, stationInfo = null, sourcePre
   let metarAttempted = false;
   let metarUnavailable = false;
   let metarIcaoCode = null;
+  let windborneAttempted = false;
+  let windborneUnavailable = false;
 
   // Fetch METAR if requested
   if (sourcePreference === 'metar' || sourcePreference === 'hybrid') {
@@ -182,10 +195,12 @@ export const getUnifiedWeather = async (stationId, stationInfo = null, sourcePre
 
   // Fetch WindBorne if requested
   if (sourcePreference === 'windborne' || sourcePreference === 'hybrid') {
+    windborneAttempted = true;
     try {
       windborneData = await windborneService.getHistoricalWeather(stationId);
     } catch (error) {
       console.warn(`WindBorne fetch failed for ${stationId}:`, error.message);
+      windborneUnavailable = true;
     }
   }
 
@@ -211,6 +226,10 @@ export const getUnifiedWeather = async (stationId, stationInfo = null, sourcePre
       metarAttempted: metarAttempted,
       metarUnavailable: metarUnavailable,
       metarIcaoCode: metarIcaoCode,
+      windborneAttempted: windborneAttempted,
+      windborneUnavailable: windborneUnavailable,
+      degraded: metarAttempted && metarUnavailable,
+      degradedReasons: metarAttempted && metarUnavailable ? ['METAR_UNAVAILABLE'] : [],
     };
   }
 
@@ -229,6 +248,10 @@ export const getUnifiedWeather = async (stationId, stationInfo = null, sourcePre
       metarAttempted: false,
       metarUnavailable: false,
       metarIcaoCode: null,
+      windborneAttempted: windborneAttempted,
+      windborneUnavailable: windborneUnavailable,
+      degraded: windborneAttempted && windborneUnavailable,
+      degradedReasons: windborneAttempted && windborneUnavailable ? ['WINDBORNE_UNAVAILABLE'] : [],
     };
   }
 
@@ -237,6 +260,9 @@ export const getUnifiedWeather = async (stationId, stationInfo = null, sourcePre
     metarAttempted,
     metarUnavailable,
     metarIcaoCode,
+  }, {
+    windborneAttempted,
+    windborneUnavailable,
   });
 };
 
