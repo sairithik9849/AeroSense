@@ -2,12 +2,17 @@ import * as unifiedWeatherService from '../services/unifiedWeatherService.js';
 import * as windborneService from '../services/windborneService.js';
 
 export const getWeather = async (req, res, next) => {
-  const { station, source } = req.query;
+  const { station, source, demo } = req.query;
   if (!station) {
     return res.status(400).json({ error: 'Station ID required' });
   }
 
   try {
+    if (demo === 'true') {
+      const demoWeather = windborneService.getDemoWeather(station);
+      return res.json(demoWeather);
+    }
+
     // Determine source preference
     const sourcePreference = source === 'metar' || source === 'windborne' 
       ? source 

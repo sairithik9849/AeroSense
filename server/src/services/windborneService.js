@@ -4,6 +4,14 @@ import { StationSchema, WeatherResponseSchema } from '../utils/validation.js';
 import { z } from 'zod';
 
 const BASE_URL = 'https://sfc.windbornesystems.com';
+const STATIONS_CACHE_KEY = 'windborne:stations';
+
+export const DEMO_STATION = {
+  station_id: 'DEMO_STATION_001',
+  station_name: 'AeroSense Demo Station',
+  latitude: 39.8561,
+  longitude: -104.6737,
+};
 
 const createProviderUnavailableError = (message, cause = null) => {
   const error = new Error(message);
@@ -15,7 +23,7 @@ const createProviderUnavailableError = (message, cause = null) => {
 };
 
 export const getStations = async () => {
-  const cacheKey = 'windborne:stations';
+  const cacheKey = STATIONS_CACHE_KEY;
   const cached = await getCache(cacheKey);
   if (cached) return cached;
 
@@ -45,6 +53,74 @@ export const getStations = async () => {
 
     throw createProviderUnavailableError('WindBorne station service unavailable', error);
   }
+};
+
+export const getStationFallbackStatus = async () => {
+  const freshCache = await getCache(STATIONS_CACHE_KEY);
+  const staleCache = await getStaleCache(STATIONS_CACHE_KEY);
+
+  return {
+    freshCacheHit: Boolean(freshCache),
+    staleCacheHit: Boolean(staleCache),
+    cacheEmpty: !freshCache && !staleCache,
+  };
+};
+
+export const getDemoStation = () => ({
+  ...DEMO_STATION,
+});
+
+export const getDemoWeather = (stationId = DEMO_STATION.station_id) => {
+  const now = Date.now();
+  const points = [];
+
+  // 36 hourly points creates a realistic timeline for slider/compare features.
+  for (let i = 35; i >= 0; i -= 1) {
+    const timestamp = new Date(now - i * 60 * 60 * 1000).toISOString();
+    const phase = (35 - i) / 6;
+    const temperature = 58 + Math.sin(phase) * 8;
+    const windSpeed = 10 + Math.cos(phase * 0.7) * 3;
+    const windDirectionDeg = (230 + phase * 12) % 360;
+    const radians = (windDirectionDeg * Math.PI) / 180;
+
+    points.push({
+      timestamp,
+      temperature,
+      wind_x: Math.cos(radians) * windSpeed,
+      wind_y: Math.sin(radians) * windSpeed,
+      dewpoint: temperature - 7,
+      pressure: 1013 + Math.sin(phase * 0.4) * 4,
+      precip: Math.max(0, Math.sin(phase - 2) * 0.6),
+      wind_gust: windSpeed + 4,
+      wind_direction: windDirectionDeg,
+      visibility: 10,
+      source: 'Demo',
+    });
+  }
+
+  const current = {
+    ...points[points.length - 1],
+    dataAge: 0,
+    isRealTime: false,
+    source: 'Demo',
+  };
+
+  return {
+    points,
+    current,
+    source: 'Demo',
+    dataAge: 0,
+    isRealTime: false,
+    station: stationId,
+    metarAttempted: false,
+    metarUnavailable: false,
+    metarIcaoCode: null,
+    windborneAttempted: false,
+    windborneUnavailable: true,
+    degraded: true,
+    degradedReasons: ['WINDBORNE_UNAVAILABLE', 'DEMO_MODE'],
+    demoMode: true,
+  };
 };
 
 export const getHistoricalWeather = async (stationId) => {

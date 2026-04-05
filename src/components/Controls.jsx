@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Search, MapPin, Wind, Plane, Clock, Sparkles, Loader2, X, Thermometer, AlertTriangle, CheckCircle, ChevronDown, ChevronUp, Maximize2, Columns, BookOpen, Info, Github, Home } from 'lucide-react';
+import { Search, MapPin, Wind, Plane, Clock, Sparkles, Loader2, X, Thermometer, AlertTriangle, CheckCircle, ChevronDown, ChevronUp, Maximize2, Columns, BookOpen, Info, Github, Home, Database } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import About from './About';
 import { getApiEndpoint } from '../utils/api';
@@ -70,6 +70,9 @@ export default function Controls({
     setCompareIndexA,
     compareIndexB,
     setCompareIndexB,
+    demoEligible,
+    useDemoData,
+    onToggleDemoMode,
     onReturnToLanding,
     onResetAll
 }) {
@@ -180,6 +183,20 @@ export default function Controls({
                     </h1>
                 </button>
                 <div className="flex items-center gap-2">
+                    {demoEligible && (
+                        <button
+                            onClick={onToggleDemoMode}
+                            className={`p-2 rounded-lg border backdrop-blur-md transition-all shrink-0 ${
+                                useDemoData
+                                    ? 'border-amber-500/60 bg-amber-500/20 text-amber-300'
+                                    : 'border-zinc-700/60 bg-zinc-900/90 text-zinc-400 hover:text-amber-300 hover:border-amber-500/50'
+                            }`}
+                            title={useDemoData ? 'Disable demo mode' : 'Use demo data'}
+                        >
+                            <Database size={16} className="md:hidden" />
+                            <Database size={18} className="hidden md:block" />
+                        </button>
+                    )}
                     <button
                         onClick={onReturnToLanding}
                         className="p-2 rounded-lg border border-zinc-700/60 bg-zinc-900/90 backdrop-blur-md text-zinc-400 hover:text-blue-300 hover:border-blue-500/50 transition-all shrink-0"
@@ -386,7 +403,8 @@ export default function Controls({
 
                                         setAnalysisLoading(true);
                                         try {
-                                            const res = await fetch(getApiEndpoint(`/api/analyze?station=${selectedStation.id}`));
+                                            const demoQuery = useDemoData ? '&demo=true' : '';
+                                            const res = await fetch(getApiEndpoint(`/api/analyze?station=${selectedStation.id}${demoQuery}`));
                                             if (res.ok) {
                                                 const data = await res.json();
                                                 setAnalysis(data);

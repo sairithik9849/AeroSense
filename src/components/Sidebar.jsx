@@ -44,6 +44,8 @@ export default function Sidebar({ station, onClose, weather: propWeather, timeIn
   const metarIcaoCode = propWeather?.metarIcaoCode || null;
   const degraded = propWeather?.degraded || false;
   const degradedReasons = Array.isArray(propWeather?.degradedReasons) ? propWeather.degradedReasons : [];
+  const demoMode = propWeather?.demoMode || false;
+  const windborneUnavailable = degradedReasons.includes('WINDBORNE_UNAVAILABLE');
 
   // 2. Calculate wind safely. If no 'current', wind is null.
   const wind = current ? getWindData(current.wind_x, current.wind_y) : null;
@@ -151,13 +153,25 @@ export default function Sidebar({ station, onClose, weather: propWeather, timeIn
           <div className="mt-3 p-2 bg-amber-500/10 border border-amber-500/30 rounded text-xs text-amber-300 flex items-start gap-2">
             <AlertTriangle size={14} className="mt-0.5 shrink-0" />
             <div>
-              <p className="font-semibold">Degraded data mode</p>
+              <p className="font-semibold">{windborneUnavailable ? 'Windborne unavailable' : 'Degraded data mode'}</p>
               <p className="text-[10px] opacity-90">
-                Some providers are temporarily unavailable. Showing best available weather data.
+                {windborneUnavailable
+                  ? 'Windborne API is currently unavailable. Showing best available weather data.'
+                  : 'Some providers are temporarily unavailable. Showing best available weather data.'}
               </p>
               {degradedReasons.length > 0 && (
                 <p className="text-[10px] opacity-80 mt-1">Reasons: {degradedReasons.join(', ')}</p>
               )}
+            </div>
+          </div>
+        )}
+
+        {demoMode && (
+          <div className="mt-3 p-2 bg-cyan-500/10 border border-cyan-500/30 rounded text-xs text-cyan-300 flex items-start gap-2">
+            <Info size={14} className="mt-0.5 shrink-0" />
+            <div>
+              <p className="font-semibold">Demo data active</p>
+              <p className="text-[10px] opacity-90">Showing demo station weather so you can preview all features during outage.</p>
             </div>
           </div>
         )}

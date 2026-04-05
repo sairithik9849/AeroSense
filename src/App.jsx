@@ -9,6 +9,13 @@ import Landing from './components/Landing';
 import { getApiEndpoint } from './utils/api';
 
 export default function App() {
+  const demoStation = {
+    id: 'DEMO_STATION_001',
+    name: 'AeroSense Demo Station',
+    lat: 39.8561,
+    lng: -104.6737,
+  };
+
   const [showLanding, setShowLanding] = useState(() => {
     // Check if user has visited before
     const hasVisited = localStorage.getItem('aerosense-visited');
@@ -31,6 +38,8 @@ export default function App() {
   const [rateLimitRetryAfter, setRateLimitRetryAfter] = useState(null);
   const [showFlights, setShowFlights] = useState(true);
   const [zoomLevel, setZoomLevel] = useState(10); // Track map zoom for wind animation
+  const [demoEligible, setDemoEligible] = useState(false);
+  const [useDemoData, setUseDemoData] = useState(false);
 
   // Dimensions for Overlay
   const [dimensions, setDimensions] = useState({ width: window.innerWidth, height: window.innerHeight });
@@ -67,10 +76,12 @@ export default function App() {
       .then((data) => {
         if (Array.isArray(data)) {
           setStations(data);
+          setDemoEligible(false);
           return;
         }
 
         console.warn('Stations API returned non-array payload:', data);
+        setDemoEligible(Boolean(data?.demoEligible));
         setStations([]);
       })
       .catch((err) => console.error("Failed to load stations:", err));
@@ -122,7 +133,8 @@ export default function App() {
 
     const fetchWeather = async () => {
       try {
-        const res = await fetch(getApiEndpoint(`/api/weather?station=${selectedStation.id}`));
+        const demoQuery = useDemoData ? '&demo=true' : '';
+        const res = await fetch(getApiEndpoint(`/api/weather?station=${selectedStation.id}${demoQuery}`));
         if (res.ok) {
           const data = await res.json();
           setWeatherData(data);
@@ -140,7 +152,7 @@ export default function App() {
     };
 
     fetchWeather();
-  }, [selectedStation]);
+  }, [selectedStation, useDemoData]);
 
   const onSearchResultSelect = (station) => {
     const normalizedStation = {
@@ -216,7 +228,8 @@ export default function App() {
   const handleRefreshWeather = async () => {
     if (!selectedStation || !selectedStation.id) return;
     try {
-      const res = await fetch(getApiEndpoint(`/api/weather?station=${selectedStation.id}`));
+      const demoQuery = useDemoData ? '&demo=true' : '';
+      const res = await fetch(getApiEndpoint(`/api/weather?station=${selectedStation.id}${demoQuery}`));
       if (res.ok) {
         const data = await res.json();
         setWeatherData(data);
@@ -228,6 +241,29 @@ export default function App() {
     } catch (err) {
       console.error("Failed to refresh weather:", err);
     }
+  };
+
+  const handleToggleDemoMode = () => {
+    if (!demoEligible) return;
+
+    const nextMode = !useDemoData;
+    setUseDemoData(nextMode);
+
+    if (nextMode) {
+      setSearchQuery('');
+      setSelectedStation(demoStation);
+      setWeatherData(null);
+      setSelectedFlight(null);
+      setFlights([]);
+      setRateLimitRetryAfter(null);
+      return;
+    }
+
+    setSelectedStation(null);
+    setWeatherData(null);
+    setSelectedFlight(null);
+    setFlights([]);
+    setRateLimitRetryAfter(null);
   };
 
   const [isTransitioning, setIsTransitioning] = useState(false);
@@ -321,6 +357,9 @@ export default function App() {
         setCompareIndexA={setCompareIndexA}
         compareIndexB={compareIndexB}
         setCompareIndexB={setCompareIndexB}
+        demoEligible={demoEligible}
+        useDemoData={useDemoData}
+        onToggleDemoMode={handleToggleDemoMode}
         onReturnToLanding={handleReturnToLanding}
         onResetAll={() => {
           setSelectedStation(null);
@@ -330,6 +369,7 @@ export default function App() {
           setCompareEnabled(false);
           setCompareIndexA(null);
           setCompareIndexB(null);
+          setUseDemoData(false);
           setWeatherData(null);
           setFlights([]);
         }}

@@ -8,10 +8,15 @@ export const getAllStations = async (req, res, next) => {
     res.json(stations);
   } catch (error) {
     if (error.code === 'WINDBORNE_UNAVAILABLE') {
+      const fallbackStatus = await windborneService.getStationFallbackStatus();
+
       return res.status(503).json({
         error: 'Station service temporarily unavailable',
         degraded: true,
+        reason: 'WINDBORNE_UNAVAILABLE',
         source: 'WindBorne',
+        cacheEmpty: fallbackStatus.cacheEmpty,
+        demoEligible: Boolean(fallbackStatus.cacheEmpty),
       });
     }
     next(error);

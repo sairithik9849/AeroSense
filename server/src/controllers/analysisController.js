@@ -3,12 +3,36 @@ import * as windborneService from '../services/windborneService.js';
 import * as geminiService from '../services/geminiService.js';
 
 export const analyzeStation = async (req, res, next) => {
-  const { station } = req.query;
+  const { station, demo } = req.query;
   if (!station) {
     return res.status(400).json({ error: 'Station ID required' });
   }
 
   try {
+    if (demo === 'true') {
+      const demoStation = windborneService.getDemoStation();
+      const weatherData = windborneService.getDemoWeather(station);
+
+      const analysis = await geminiService.analyzeStationData(
+        {
+          id: station,
+          name: demoStation.station_name,
+          lat: demoStation.latitude,
+          lng: demoStation.longitude,
+          estimated: true,
+        },
+        weatherData.points,
+        weatherData.current
+      );
+
+      return res.json({
+        ...analysis,
+        degraded: true,
+        degradedReasons: ['WINDBORNE_UNAVAILABLE', 'DEMO_MODE'],
+        demoMode: true,
+      });
+    }
+
     // Get station info
     let stationInfo = null;
     let stationEnrichmentFailed = false;
