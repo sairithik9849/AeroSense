@@ -27,9 +27,9 @@ export default function Sidebar({ station, onClose, weather: propWeather, timeIn
   // For current/latest view: prefer 'current' field (real-time METAR) if available
   const points = propWeather?.points || [];
   const isAtLatest = timeIndex >= 0 && timeIndex === points.length - 1;
-  const current = (isAtLatest && propWeather?.current) 
-    ? propWeather.current  // Use real-time METAR data when at latest point
-    : (points[timeIndex] || null);  // Use historical WindBorne data for historical view
+  const current = (isAtLatest && propWeather?.current)
+    ? propWeather.current
+    : (points[timeIndex] || null);
 
   // Compare points (if enabled)
   const pointA = compareEnabled && points.length > 0 ? points[Math.min(Math.max(0, compareIndexA ?? 0), points.length - 1)] : null;
@@ -46,6 +46,7 @@ export default function Sidebar({ station, onClose, weather: propWeather, timeIn
   const degradedReasons = Array.isArray(propWeather?.degradedReasons) ? propWeather.degradedReasons : [];
   const demoMode = propWeather?.demoMode || false;
   const windborneUnavailable = degradedReasons.includes('WINDBORNE_UNAVAILABLE');
+  const usingMetarHistory = degradedReasons.includes('WINDBORNE_UNAVAILABLE_USING_METAR_HISTORY');
 
   // 2. Calculate wind safely. If no 'current', wind is null.
   const wind = current ? getWindData(current.wind_x, current.wind_y) : null;
@@ -122,15 +123,11 @@ export default function Sidebar({ station, onClose, weather: propWeather, timeIn
                 <span className="uppercase font-semibold">
                   {(() => {
                     if (dataSource === 'hybrid') {
-                      if (isRealTime) {
-                        return 'METAR (current) + WindBorne (historical)';
-                      } else {
-                        return 'WindBorne (current & historical)';
-                      }
+                      return usingMetarHistory
+                        ? 'METAR (current & historical)'
+                        : 'METAR (current) + WindBorne (historical)';
                     } else if (dataSource === 'METAR') {
                       return 'METAR (current)';
-                    } else if (metarAttempted && metarUnavailable && dataSource === 'WindBorne') {
-                      return 'WindBorne (METAR unavailable)';
                     } else {
                       return dataSource;
                     }
@@ -149,14 +146,24 @@ export default function Sidebar({ station, onClose, weather: propWeather, timeIn
             </div>
           )}
 
-        {degraded && (
+        {usingMetarHistory && (
+          <div className="mt-3 p-2 bg-blue-500/10 border border-blue-500/30 rounded text-xs text-blue-300 flex items-start gap-2">
+            <Info size={14} className="mt-0.5 shrink-0" />
+            <div>
+              <p className="font-semibold">Live METAR data</p>
+              <p className="text-[10px] opacity-90">Historical data sourced from aviationweather.gov METAR records (last 24 h).</p>
+            </div>
+          </div>
+        )}
+
+        {degraded && !usingMetarHistory && (
           <div className="mt-3 p-2 bg-amber-500/10 border border-amber-500/30 rounded text-xs text-amber-300 flex items-start gap-2">
             <AlertTriangle size={14} className="mt-0.5 shrink-0" />
             <div>
-              <p className="font-semibold">{windborneUnavailable ? 'Windborne unavailable' : 'Degraded data mode'}</p>
+              <p className="font-semibold">{windborneUnavailable ? 'WindBorne unavailable' : 'Degraded data mode'}</p>
               <p className="text-[10px] opacity-90">
                 {windborneUnavailable
-                  ? 'Windborne API is currently unavailable. Showing best available weather data.'
+                  ? 'WindBorne API is currently unavailable. Showing best available weather data.'
                   : 'Some providers are temporarily unavailable. Showing best available weather data.'}
               </p>
               {degradedReasons.length > 0 && (
@@ -316,7 +323,7 @@ export default function Sidebar({ station, onClose, weather: propWeather, timeIn
                   </div>
                   <div>
                     <p className="uppercase tracking-wider">Precip</p>
-                    <p className="text-zinc-200 font-mono">{current?.precip?.toFixed(2) || "0.00"} mm</p>
+                    <p className="text-zinc-200 font-mono">{current?.precip != null ? `${current.precip.toFixed(2)} mm` : 'N/A'}</p>
                   </div>
                 </div>
                 

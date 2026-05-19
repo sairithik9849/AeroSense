@@ -1,5 +1,6 @@
 import * as unifiedWeatherService from '../services/unifiedWeatherService.js';
 import * as windborneService from '../services/windborneService.js';
+import * as aviationStationsService from '../services/aviationStationsService.js';
 
 export const getWeather = async (req, res, next) => {
   const { station, source, demo } = req.query;
@@ -22,7 +23,13 @@ export const getWeather = async (req, res, next) => {
     let stationInfo = null;
     let stationEnrichmentFailed = false;
     try {
-      const stations = await windborneService.getStations();
+      let stations;
+      try {
+        stations = await windborneService.getStations();
+      } catch {
+        // WindBorne down — try aviation stations for coordinate enrichment
+        stations = await aviationStationsService.getAviationStations();
+      }
       const stationData = stations.find(s => s.station_id === station);
       if (stationData) {
         stationInfo = {
@@ -32,7 +39,7 @@ export const getWeather = async (req, res, next) => {
         };
         console.log(`Station info for ${station}: ${stationData.station_name} at ${stationData.latitude},${stationData.longitude}`);
       } else {
-        console.log(`Station ${station} not found in WindBorne stations list`);
+        console.log(`Station ${station} not found in station list`);
       }
     } catch (err) {
       console.warn(`Could not fetch station info for ${station}:`, err.message);

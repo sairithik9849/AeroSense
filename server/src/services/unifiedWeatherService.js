@@ -33,9 +33,9 @@ const getMostRecentWindBornePoint = (windborneData) => {
   
   return {
     ...latest,
-    source: 'WindBorne',
+    source: latest.source || 'WindBorne',
     dataAge: age,
-    isRealTime: age !== null && age < 30, // Consider < 30 min as "real-time enough"
+    isRealTime: age !== null && age < 30,
   };
 };
 
@@ -67,9 +67,8 @@ const mergeWeatherData = (metarData, windborneData, stationId, metarMetadata = {
     source = 'hybrid';
     isRealTime = true;
   } else if (windborneLatest && windborneLatest.isRealTime) {
-    // WindBorne has recent data
     currentPoint = windborneLatest;
-    source = 'WindBorne';
+    source = windborneLatest.source || 'WindBorne';
     isRealTime = true;
   } else if (metarData) {
     // METAR exists but is stale, still use it
@@ -82,9 +81,8 @@ const mergeWeatherData = (metarData, windborneData, stationId, metarMetadata = {
     source = 'METAR';
     isRealTime = false;
   } else if (windborneLatest) {
-    // Only WindBorne available
     currentPoint = windborneLatest;
-    source = 'WindBorne';
+    source = windborneLatest.source || 'WindBorne';
     isRealTime = false;
   } else {
     // No data available
@@ -204,6 +202,22 @@ export const getUnifiedWeather = async (stationId, stationInfo = null, sourcePre
     }
   }
 
+  // WindBorne unavailable — fall back to METAR history for the time-series points
+  if (windborneUnavailable && !windborneData && (sourcePreference === 'windborne' || sourcePreference === 'hybrid')) {
+    const icaoCode = getICAOCode(stationId, stationInfo);
+    if (icaoCode) {
+      try {
+        const metarHistory = await aviationWeatherService.getMETARHistory(icaoCode, 24);
+        if (metarHistory && metarHistory.points && metarHistory.points.length > 0) {
+          windborneData = { points: metarHistory.points };
+          console.log(`[UnifiedWeather] Using METAR history fallback for ${stationId} (${metarHistory.points.length} points)`);
+        }
+      } catch (histErr) {
+        console.warn(`[UnifiedWeather] METAR history fallback failed for ${stationId}:`, histErr.message);
+      }
+    }
+  }
+
   // Handle source-specific requests
   if (sourcePreference === 'metar') {
     if (!metarData) {
@@ -256,7 +270,8 @@ export const getUnifiedWeather = async (stationId, stationInfo = null, sourcePre
   }
 
   // Hybrid: merge both sources
-  return mergeWeatherData(metarData, windborneData, stationId, {
+  const usingMetarHistory = windborneUnavailable && windborneData !== null;
+  const merged = mergeWeatherData(metarData, windborneData, stationId, {
     metarAttempted,
     metarUnavailable,
     metarIcaoCode,
@@ -264,5 +279,15 @@ export const getUnifiedWeather = async (stationId, stationInfo = null, sourcePre
     windborneAttempted,
     windborneUnavailable,
   });
+
+  if (merged && usingMetarHistory) {
+    merged.degradedReasons = [
+      ...(merged.degradedReasons || []),
+      'WINDBORNE_UNAVAILABLE_USING_METAR_HISTORY',
+    ];
+    merged.degraded = true;
+  }
+
+  return merged;
 };
 

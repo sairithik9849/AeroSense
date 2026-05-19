@@ -1,6 +1,27 @@
 import apiClient from '../utils/apiClient.js';
 import { getCache, setCache } from '../utils/cache.js';
 
+// METAR DDHHMMZ group → ISO timestamp
+// METAR encodes day/hour/minute in UTC; we reconstruct the full date from the current month.
+const parseMetarTimestamp = (metarString) => {
+  const match = metarString.match(/\b(\d{2})(\d{2})(\d{2})Z\b/);
+  if (!match) return new Date().toISOString();
+
+  const dd = parseInt(match[1], 10);
+  const hh = parseInt(match[2], 10);
+  const mm = parseInt(match[3], 10);
+
+  const now = new Date();
+  const ts = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), dd, hh, mm, 0));
+
+  // If the reconstructed date is in the future, the observation is from the previous month
+  if (ts > now) {
+    ts.setUTCMonth(ts.getUTCMonth() - 1);
+  }
+
+  return ts.toISOString();
+};
+
 const METAR_BASE_URL = 'https://aviationweather.gov/api/data/metar';
 
 /**
@@ -236,6 +257,69 @@ export const getMETAR = async (icaoCode) => {
  * @param {number} radius - Search radius in nautical miles (default 50)
  * @returns {Object|null} - Parsed METAR data or null if not found
  */
+/**
+ * Fetches the last N hours of METAR observations for a station, returning a
+ * time series shaped like WindBorne's historical weather response so it can
+ * be used as a drop-in replacement when WindBorne is unavailable.
+ * @param {string} icaoCode - ICAO station code (e.g. "KJFK")
+ * @param {number} hours - How many hours of history to fetch (default 24)
+ * @returns {{ points: Array, current: Object }|null}
+ */
+export const getMETARHistory = async (icaoCode, hours = 24) => {
+  if (!icaoCode || icaoCode.length < 3) return null;
+
+  const cacheKey = `metar:history:${icaoCode}:${hours}h`;
+  const cached = await getCache(cacheKey);
+  if (cached) return cached;
+
+  try {
+    const response = await apiClient.get(METAR_BASE_URL, {
+      params: { ids: icaoCode, format: 'raw', hours },
+      timeout: 12000,
+    });
+
+    const metarText = typeof response.data === 'string'
+      ? response.data
+      : response.data?.data || '';
+
+    if (!metarText || metarText.trim().length === 0) return null;
+
+    const metarLines = metarText.trim().split('\n').filter(line => line.trim());
+    if (metarLines.length === 0) return null;
+
+    const points = metarLines
+      .map(line => {
+        const parsed = parseMETAR(line);
+        if (!parsed) return null;
+        const { wind_x, wind_y } = windToComponents(parsed.wind_direction, parsed.wind_speed);
+        return {
+          timestamp: parseMetarTimestamp(line),
+          temperature: parsed.temperature,
+          wind_x,
+          wind_y,
+          wind_gust: parsed.wind_gust,
+          wind_direction: parsed.wind_direction,
+          dewpoint: parsed.dewpoint,
+          pressure: parsed.pressure,
+          visibility: parsed.visibility,
+          precip: null,
+          source: 'METAR',
+        };
+      })
+      .filter(Boolean)
+      .sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
+
+    if (points.length === 0) return null;
+
+    const result = { points, current: points[points.length - 1] };
+    await setCache(cacheKey, result, 300); // 5 minutes
+    return result;
+  } catch (error) {
+    console.error(`[METAR] History fetch error for ${icaoCode}:`, error.message);
+    return null;
+  }
+};
+
 export const getMETARByCoordinates = async (lat, lng, radius = 50) => {
   const cacheKey = `metar:coords:${lat.toFixed(2)}:${lng.toFixed(2)}`;
   const cached = await getCache(cacheKey);
