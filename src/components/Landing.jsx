@@ -61,6 +61,17 @@ export default function Landing({ onEnter }) {
     { name: 'Google Gemini', description: 'AI-powered weather insights' },
   ];
 
+  const marqueeItems = [
+    'Live Wind',
+    'Temperature',
+    'Pressure',
+    'Time Travel',
+    'Flight Tracking',
+    'Landing Risk',
+    'AI Insights',
+    'Global Coverage',
+  ];
+
   const handleScroll = (e) => {
     setScrolled(e.currentTarget.scrollTop > 24);
   };
@@ -209,13 +220,29 @@ export default function Landing({ onEnter }) {
       </header>
 
       {/* ---------------------------------------------------------------- */}
-      {/* Oversized wordmark divider */}
+      {/* Capability marquee strip */}
       {/* ---------------------------------------------------------------- */}
-      <div className="relative overflow-hidden border-y border-border bg-surface/40">
-        <div className="max-w-6xl mx-auto px-5 py-8 flex items-center justify-center">
-          <span className="select-none whitespace-nowrap text-[18vw] md:text-[12vw] font-extrabold leading-none tracking-tighter text-fg/[0.04]">
-            AEROSENSE
-          </span>
+      <div className="relative overflow-hidden border-y border-border bg-surface/60">
+        {/* accent top hairline */}
+        <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-accent/60 to-transparent" />
+
+        {/* edge fades */}
+        <div className="pointer-events-none absolute inset-y-0 left-0 z-10 w-24 bg-gradient-to-r from-surface to-transparent" />
+        <div className="pointer-events-none absolute inset-y-0 right-0 z-10 w-24 bg-gradient-to-l from-surface to-transparent" />
+
+        <div className="flex select-none whitespace-nowrap py-5 marquee-track">
+          {[0, 1].map((dup) => (
+            <div key={dup} className="flex items-center" aria-hidden={dup === 1}>
+              {marqueeItems.map((item, i) => (
+                <span key={`${dup}-${i}`} className="flex items-center">
+                  <span className="text-base md:text-lg font-semibold tracking-tight text-fg-muted px-6">
+                    {item}
+                  </span>
+                  <span className="h-1.5 w-1.5 rounded-full bg-accent/70" />
+                </span>
+              ))}
+            </div>
+          ))}
         </div>
       </div>
 
