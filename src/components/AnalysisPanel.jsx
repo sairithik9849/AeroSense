@@ -56,19 +56,19 @@ export default function AnalysisPanel({ analysis, onClose }) {
   const formattedInsights = formatInsights(analysis.insights);
 
   return (
-    <div className="mt-6 border-t border-zinc-700 pt-6">
+    <div className="mt-6 border-t border-border pt-6">
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-2">
-          <div className="p-2 bg-purple-500/20 rounded-lg text-purple-400">
+          <div className="p-2 bg-accent/15 rounded-lg text-accent">
             <Sparkles size={16} />
           </div>
-          <h3 className="text-sm font-semibold text-zinc-200 uppercase tracking-wide">
+          <h3 className="text-sm font-semibold text-foreground uppercase tracking-wide">
             AI Analysis
           </h3>
         </div>
         <button
           onClick={onClose}
-          className="p-1 hover:bg-zinc-800 rounded transition text-zinc-400 hover:text-white"
+          className="p-1 hover:bg-surface-3 rounded transition text-fg-muted hover:text-foreground"
         >
           <X size={16} />
         </button>
@@ -76,7 +76,7 @@ export default function AnalysisPanel({ analysis, onClose }) {
 
       {/* Analysis Metadata */}
       {analysis.dataPointsAnalyzed && (
-        <div className="mb-4 p-2 bg-zinc-800/40 rounded text-xs text-zinc-400">
+        <div className="mb-4 p-2 bg-surface-2 rounded text-xs text-fg-muted">
           Analyzed {analysis.dataPointsAnalyzed} data points
           {analysis.dateRange && (
             <span className="ml-2">
@@ -109,7 +109,7 @@ export default function AnalysisPanel({ analysis, onClose }) {
               <HeadingTag
                 key={index}
                 className={clsx(
-                  "font-bold text-zinc-200 mt-4 mb-2",
+                  "font-bold text-foreground mt-4 mb-2",
                   section.level === 1 && "text-lg",
                   section.level === 2 && "text-base",
                   section.level === 3 && "text-sm"
@@ -120,7 +120,7 @@ export default function AnalysisPanel({ analysis, onClose }) {
             );
           } else {
             return (
-              <div key={index} className="text-sm text-zinc-300 leading-relaxed">
+              <div key={index} className="text-sm text-fg-muted leading-relaxed">
                 {section.content.map((paragraph, pIndex) => (
                   <p key={pIndex} className="mb-2">
                     {paragraph}
@@ -133,7 +133,7 @@ export default function AnalysisPanel({ analysis, onClose }) {
       </div>
 
       {/* Footer */}
-      <div className="mt-4 pt-4 border-t border-zinc-800 text-[10px] text-zinc-500 text-center">
+      <div className="mt-4 pt-4 border-t border-border text-[10px] text-fg-subtle text-center">
         Powered by Google Gemini AI
       </div>
     </div>

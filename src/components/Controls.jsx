@@ -493,7 +493,7 @@ export default function Controls({
             {/* Analysis Modal */}
             {showAnalysisModal && analysis && (
                 <div
-                    className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/75 backdrop-blur-sm animate-fade-in"
+                    className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-background/85 backdrop-blur-sm animate-fade-in"
                     onClick={() => setShowAnalysisModal(false)}
                     role="dialog"
                     aria-modal="true"

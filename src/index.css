@@ -117,6 +117,31 @@ body {
   .chip {
     @apply inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[11px] font-medium;
   }
+
+  /* Metric tile (compact data cell inside panels) */
+  .metric-tile {
+    @apply bg-surface-2 border border-border rounded-lg p-3;
+  }
+
+  /* Metric / field label */
+  .metric-label {
+    @apply text-[10px] font-semibold uppercase tracking-[0.08em] text-fg-subtle;
+  }
+
+  /* Section heading inside modals */
+  .section-heading {
+    @apply text-[11px] font-semibold uppercase tracking-[0.08em] text-fg-muted;
+  }
+}
+
+/* Soft scrollbar variant for inner scroll regions */
+.custom-scrollbar::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: var(--color-border-strong);
+  border-radius: 9999px;
 }
 
 /* ----------------------------------------------------------------
