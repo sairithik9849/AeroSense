@@ -85,7 +85,7 @@ export default function Landing({ onEnter }) {
   return (
     <div
       onScroll={handleScroll}
-      className="fixed inset-0 z-50 bg-background overflow-y-auto overflow-x-hidden animate-fade-in"
+      className="fixed inset-0 z-50 bg-background overflow-y-auto overflow-x-hidden scroll-smooth animate-fade-in"
     >
       {/* ---------------------------------------------------------------- */}
       {/* Floating glass nav */}
@@ -147,7 +147,7 @@ export default function Landing({ onEnter }) {
           <div className="max-w-6xl mx-auto w-full px-5 pt-28 pb-10">
             <div className="max-w-2xl">
               <div
-                className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full border border-accent/30 bg-accent/10 text-accent text-xs font-medium mb-7 animate-fade-in"
+                className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full border border-border-strong bg-surface text-fg text-xs font-medium mb-7 shadow-lg animate-fade-in"
                 style={{ opacity: 0, animationFillMode: 'forwards' }}
               >
                 <span className="relative flex h-2 w-2">
