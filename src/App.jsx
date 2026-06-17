@@ -336,7 +336,7 @@ export default function App() {
   }
 
   return (
-    <div className={`h-screen w-screen bg-zinc-950 relative overflow-hidden font-sans selection:bg-blue-500/30 transition-opacity duration-700 ${isTransitioning ? 'opacity-0' : 'opacity-100'}`}>
+    <div className={`h-screen w-screen bg-background relative overflow-hidden font-sans selection:bg-accent/30 transition-opacity duration-700 ${isTransitioning ? 'opacity-0' : 'opacity-100'}`}>
 
       {/* Floating Controls + Time Slider */}
       <Controls

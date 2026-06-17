@@ -1,218 +1,198 @@
-import React from 'react';
-import { X, Wind, Plane, Database, Globe, Clock, Sparkles, MapPin, AlertTriangle, Zap } from 'lucide-react';
+import { X, Wind, Plane, Globe, Clock, Sparkles, MapPin, AlertTriangle, Zap } from 'lucide-react';
 
 export default function About({ onClose }) {
   const features = [
     {
-      icon: <Globe size={20} />,
+      icon: <Globe size={18} />,
       title: 'Interactive Map',
       description: 'Explore weather stations on a clustered globe. Click any station to see live conditions.',
-      color: 'blue'
     },
     {
-      icon: <Wind size={20} />,
+      icon: <Wind size={18} />,
       title: 'Live Weather',
-      description: 'Get real-time wind speed, temperature, and pressure. Comes from METAR airport broadcasts.',
-      color: 'cyan'
+      description: 'Real-time wind speed, temperature, and pressure sourced from METAR airport broadcasts.',
     },
     {
-      icon: <Clock size={20} />,
+      icon: <Clock size={18} />,
       title: 'Time Travel',
       description: 'Slide through historical wind snapshots to see how conditions changed over time.',
-      color: 'purple'
     },
     {
-      icon: <Plane size={20} />,
+      icon: <Plane size={18} />,
       title: 'Nearby Flights',
-      description: 'See aircraft in your area. Check if they\'d be safe to land based on current wind.',
-      color: 'amber'
+      description: "See aircraft in your area and whether they'd be safe to land in current wind.",
     },
     {
-      icon: <Sparkles size={20} />,
+      icon: <Sparkles size={18} />,
       title: 'AI Analysis',
-      description: 'Get smart insights about weather patterns and safety using Google Gemini.',
-      color: 'violet'
+      description: 'Smart insights about weather patterns and landing safety, powered by Google Gemini.',
     },
     {
-      icon: <AlertTriangle size={20} />,
+      icon: <AlertTriangle size={18} />,
       title: 'Risk Assessment',
-      description: 'Quick red/yellow/green ratings for landing safety based on wind & gusts.',
-      color: 'red'
-    }
+      description: 'Clear safe / caution / danger ratings for landing safety based on wind and gusts.',
+    },
   ];
 
-  const colorMap = {
-    blue: 'bg-blue-500/10 border-blue-500/30 text-blue-400',
-    cyan: 'bg-cyan-500/10 border-cyan-500/30 text-cyan-400',
-    purple: 'bg-purple-500/10 border-purple-500/30 text-purple-400',
-    amber: 'bg-amber-500/10 border-amber-500/30 text-amber-400',
-    violet: 'bg-violet-500/10 border-violet-500/30 text-violet-400',
-    red: 'bg-red-500/10 border-red-500/30 text-red-400'
-  };
+  const steps = [
+    {
+      icon: <MapPin size={16} />,
+      title: '1. Pick a Station',
+      description: 'Click any station on the map to load its weather data and see nearby aircraft.',
+    },
+    {
+      icon: <Wind size={16} />,
+      title: '2. View Live Conditions',
+      description:
+        'See real-time wind, temperature, and pressure pulled from live airport METAR data. The wind overlay shows the local wind field.',
+    },
+    {
+      icon: <Clock size={16} />,
+      title: '3. Time Travel (Optional)',
+      description:
+        'Use the time slider to look back at past wind conditions and understand patterns over hours or days.',
+    },
+    {
+      icon: <Plane size={16} />,
+      title: '4. Check Aircraft',
+      description:
+        'See nearby planes with altitude and distance. The app estimates if they could safely land in current wind.',
+    },
+  ];
 
   const techStack = [
     {
       category: 'Frontend',
       items: ['React', 'Vite', 'Tailwind CSS', 'Mapbox GL'],
-      description: 'Fast, responsive single-page app with interactive globe'
+      description: 'Fast, responsive single-page app with an interactive globe.',
     },
     {
       category: 'Backend',
       items: ['Node.js', 'Express'],
-      description: 'Lightweight API server that glues all data sources together'
+      description: 'Lightweight API server that glues all data sources together.',
     },
     {
       category: 'Caching & Storage',
       items: ['Upstash Redis'],
-      description: 'Serverless Redis for fast data caching to reduce API calls'
+      description: 'Serverless Redis caching to reduce upstream API calls.',
     },
     {
       category: 'Data APIs',
       items: ['METAR', 'WindBorne', 'OpenSky', 'Gemini'],
-      description: 'Real-time weather, historical wind, live aircraft, and AI insights'
-    }
+      description: 'Real-time weather, historical wind, live aircraft, and AI insights.',
+    },
+  ];
+
+  const dataSources = [
+    { name: 'METAR', description: 'Real-time airport weather broadcasts — wind, temp, pressure.' },
+    { name: 'WindBorne', description: 'Historical wind data and station grid. Powers time travel.' },
+    { name: 'OpenSky', description: 'Live aircraft positions and flight data via public API.' },
+    { name: 'Google Gemini', description: 'AI-powered analysis of weather trends and safety insights.' },
   ];
 
   return (
-    <div className="fixed inset-0 z-100 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-fade-in">
-      <div className="bg-zinc-900 border border-zinc-700 rounded-xl shadow-2xl w-full max-w-5xl max-h-[90vh] flex flex-col overflow-hidden animate-modal-in">
+    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-background/85 backdrop-blur-sm animate-fade-in">
+      <div className="panel rounded-2xl shadow-2xl w-full max-w-5xl max-h-[90vh] flex flex-col overflow-hidden animate-modal-in">
         {/* Header */}
-        <div className="p-4 border-b border-zinc-700 flex items-center justify-between bg-linear-to-r from-blue-500/10 to-cyan-500/10">
+        <div className="p-4 md:p-5 border-b border-border flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="p-2 bg-blue-500/20 rounded-lg text-blue-400">
+            <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-accent/15 text-accent">
               <Zap size={20} />
-            </div>
+            </span>
             <div>
-              <h2 className="text-lg font-bold text-white">AeroSense</h2>
-              <p className="text-xs text-zinc-400">Live weather & flight tracking for your area</p>
+              <h2 className="text-lg font-semibold text-foreground tracking-tight">AeroSense</h2>
+              <p className="text-xs text-fg-muted">Live weather &amp; flight tracking for your area</p>
             </div>
           </div>
-          <button onClick={onClose} className="p-2 hover:bg-zinc-800 rounded-lg transition text-zinc-400 hover:text-white">
+          <button
+            onClick={onClose}
+            className="p-2 hover:bg-surface-3 rounded-lg transition text-fg-muted hover:text-foreground"
+            aria-label="Close about dialog"
+          >
             <X size={20} />
           </button>
         </div>
 
         {/* Content */}
-        <div className="flex-1 overflow-y-auto p-6 space-y-8 custom-scrollbar">
+        <div className="flex-1 overflow-y-auto p-5 md:p-6 space-y-8 custom-scrollbar">
           {/* Features Grid */}
-          <div>
-            <h3 className="text-sm font-bold text-zinc-300 uppercase tracking-wide mb-4">Core Features</h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          <section>
+            <h3 className="section-heading mb-4">Core Features</h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
               {features.map((feature, idx) => (
-                <div key={idx} className={`border rounded-lg p-4 transition-all hover:shadow-lg ${colorMap[feature.color]}`}>
-                  <div className="flex items-start gap-3 mb-2">
-                    <div className="p-2 bg-black/30 rounded-lg mt-0.5">
+                <div key={idx} className="card p-4 transition-colors hover:border-border-strong">
+                  <div className="flex items-center gap-2.5 mb-2">
+                    <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-accent/12 text-accent shrink-0">
                       {feature.icon}
-                    </div>
-                    <h4 className="font-semibold text-white text-sm">{feature.title}</h4>
+                    </span>
+                    <h4 className="font-semibold text-foreground text-sm">{feature.title}</h4>
                   </div>
-                  <p className="text-xs text-zinc-300 leading-relaxed">{feature.description}</p>
+                  <p className="text-xs text-fg-muted leading-relaxed">{feature.description}</p>
                 </div>
               ))}
             </div>
-          </div>
+          </section>
 
-          {/* How Features Work */}
-          <div>
-            <h3 className="text-sm font-bold text-zinc-300 uppercase tracking-wide mb-4">How It Works</h3>
-            <div className="space-y-3">
-              <div className="bg-zinc-800/30 border border-zinc-700/50 rounded-lg p-4">
-                <div className="flex items-start gap-3">
-                  <div className="p-2 bg-blue-500/20 rounded text-blue-400 mt-0.5 shrink-0">
-                    <MapPin size={16} />
-                  </div>
-                  <div>
-                    <p className="font-semibold text-white text-sm mb-1">1. Pick a Station</p>
-                    <p className="text-xs text-zinc-400">Click any station on the map to load its weather data and see nearby aircraft.</p>
+          {/* How It Works */}
+          <section>
+            <h3 className="section-heading mb-4">How It Works</h3>
+            <div className="space-y-2.5">
+              {steps.map((step, idx) => (
+                <div key={idx} className="card p-4">
+                  <div className="flex items-start gap-3">
+                    <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-accent/12 text-accent mt-0.5 shrink-0">
+                      {step.icon}
+                    </span>
+                    <div>
+                      <p className="font-semibold text-foreground text-sm mb-1">{step.title}</p>
+                      <p className="text-xs text-fg-muted leading-relaxed">{step.description}</p>
+                    </div>
                   </div>
                 </div>
-              </div>
-
-              <div className="bg-zinc-800/30 border border-zinc-700/50 rounded-lg p-4">
-                <div className="flex items-start gap-3">
-                  <div className="p-2 bg-cyan-500/20 rounded text-cyan-400 mt-0.5 shrink-0">
-                    <Wind size={16} />
-                  </div>
-                  <div>
-                    <p className="font-semibold text-white text-sm mb-1">2. View Live Conditions</p>
-                    <p className="text-xs text-zinc-400">See real-time wind speed, temperature, and pressure pulled from live airport METAR data. The wind overlay on the map shows the local wind field.</p>
-                  </div>
-                </div>
-              </div>
-
-              <div className="bg-zinc-800/30 border border-zinc-700/50 rounded-lg p-4">
-                <div className="flex items-start gap-3">
-                  <div className="p-2 bg-purple-500/20 rounded text-purple-400 mt-0.5 shrink-0">
-                    <Clock size={16} />
-                  </div>
-                  <div>
-                    <p className="font-semibold text-white text-sm mb-1">3. Time Travel (Optional)</p>
-                    <p className="text-xs text-zinc-400">Use the time slider to look back at past wind conditions. Helps you understand weather patterns and trends over hours or days.</p>
-                  </div>
-                </div>
-              </div>
-
-              <div className="bg-zinc-800/30 border border-zinc-700/50 rounded-lg p-4">
-                <div className="flex items-start gap-3">
-                  <div className="p-2 bg-amber-500/20 rounded text-amber-400 mt-0.5 shrink-0">
-                    <Plane size={16} />
-                  </div>
-                  <div>
-                    <p className="font-semibold text-white text-sm mb-1">4. Check Aircraft</p>
-                    <p className="text-xs text-zinc-400">See planes nearby with their altitude and distance. The app estimates if they could safely land based on current wind conditions.</p>
-                  </div>
-                </div>
-              </div>
+              ))}
             </div>
-          </div>
+          </section>
 
           {/* Tech Stack */}
-          <div>
-            <h3 className="text-sm font-bold text-zinc-300 uppercase tracking-wide mb-4">Technology</h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          <section>
+            <h3 className="section-heading mb-4">Technology</h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
               {techStack.map((section, idx) => (
-                <div key={idx} className="bg-zinc-800/30 border border-zinc-700/50 rounded-lg p-4">
-                  <h4 className="font-semibold text-white text-sm mb-2">{section.category}</h4>
-                  <div className="flex flex-wrap gap-2 mb-3">
+                <div key={idx} className="card p-4">
+                  <h4 className="font-semibold text-foreground text-sm mb-2.5">{section.category}</h4>
+                  <div className="flex flex-wrap gap-1.5 mb-3">
                     {section.items.map((item, i) => (
-                      <span key={i} className="bg-zinc-700/50 text-zinc-300 text-xs px-2.5 py-1 rounded-full font-medium">
+                      <span
+                        key={i}
+                        className="bg-surface-3 text-fg-muted text-[11px] px-2 py-0.5 rounded-md font-medium"
+                      >
                         {item}
                       </span>
                     ))}
                   </div>
-                  <p className="text-xs text-zinc-400">{section.description}</p>
+                  <p className="text-xs text-fg-muted leading-relaxed">{section.description}</p>
                 </div>
               ))}
             </div>
-          </div>
+          </section>
 
           {/* Data Sources */}
-          <div>
-            <h3 className="text-sm font-bold text-zinc-300 uppercase tracking-wide mb-4">Data Sources</h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-              <div className="bg-blue-500/10 border border-blue-500/30 rounded-lg p-3">
-                <p className="font-semibold text-blue-300 text-sm mb-1">METAR</p>
-                <p className="text-xs text-blue-200/80">Real-time airport weather broadcasts. Wind, temp, pressure.</p>
-              </div>
-              <div className="bg-cyan-500/10 border border-cyan-500/30 rounded-lg p-3">
-                <p className="font-semibold text-cyan-300 text-sm mb-1">WindBorne</p>
-                <p className="text-xs text-cyan-200/80">Historical wind data and station grid. Used for time travel.</p>
-              </div>
-              <div className="bg-amber-500/10 border border-amber-500/30 rounded-lg p-3">
-                <p className="font-semibold text-amber-300 text-sm mb-1">OpenSky</p>
-                <p className="text-xs text-amber-200/80">Live aircraft positions and flight data. Public API.</p>
-              </div>
-              <div className="bg-violet-500/10 border border-violet-500/30 rounded-lg p-3">
-                <p className="font-semibold text-violet-300 text-sm mb-1">Google Gemini</p>
-                <p className="text-xs text-violet-200/80">AI-powered analysis of weather trends and safety insights.</p>
-              </div>
+          <section>
+            <h3 className="section-heading mb-4">Data Sources</h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-2.5">
+              {dataSources.map((source, idx) => (
+                <div key={idx} className="card p-3.5">
+                  <p className="font-semibold text-foreground text-sm mb-1">{source.name}</p>
+                  <p className="text-xs text-fg-muted leading-relaxed">{source.description}</p>
+                </div>
+              ))}
             </div>
-          </div>
+          </section>
         </div>
 
         {/* Footer */}
-        <div className="p-4 border-t border-zinc-700 bg-zinc-800/30 text-xs text-zinc-500 text-center">
-          Built with React, Express, and love for aviation weather.
+        <div className="p-4 border-t border-border bg-surface-2/50 text-xs text-fg-subtle text-center">
+          Built with React, Express, and a love for aviation weather.
         </div>
       </div>
     </div>

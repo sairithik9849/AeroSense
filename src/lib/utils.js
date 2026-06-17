@@ -24,3 +24,53 @@ export const getWindFromComponents = (wind_x, wind_y) => {
 
   return { speed, dir };
 };
+
+/**
+ * Centralized risk-level styling tokens so every component (Sidebar,
+ * RiskExplanation, FlightInfoPanel, flight list) renders status colors
+ * identically. Returns Tailwind class fragments for the given risk level.
+ */
+export const RISK_STYLES = {
+  SAFE: {
+    text: "text-safe",
+    bg: "bg-safe/10",
+    border: "border-safe/30",
+    cardBg: "bg-safe/[0.07]",
+    cardBorder: "border-safe/30",
+    dot: "bg-safe",
+  },
+  CAUTION: {
+    text: "text-caution",
+    bg: "bg-caution/10",
+    border: "border-caution/30",
+    cardBg: "bg-caution/[0.07]",
+    cardBorder: "border-caution/30",
+    dot: "bg-caution",
+  },
+  DANGER: {
+    text: "text-danger",
+    bg: "bg-danger/10",
+    border: "border-danger/30",
+    cardBg: "bg-danger/[0.07]",
+    cardBorder: "border-danger/30",
+    dot: "bg-danger",
+  },
+  LANDED: {
+    text: "text-fg-subtle",
+    bg: "bg-fg-subtle/10",
+    border: "border-border-strong",
+    cardBg: "bg-surface-2",
+    cardBorder: "border-border",
+    dot: "bg-fg-subtle",
+  },
+  UNKNOWN: {
+    text: "text-fg-subtle",
+    bg: "bg-fg-subtle/10",
+    border: "border-border-strong",
+    cardBg: "bg-surface-2",
+    cardBorder: "border-border",
+    dot: "bg-fg-subtle",
+  },
+};
+
+export const getRiskStyle = (risk) => RISK_STYLES[risk] || RISK_STYLES.UNKNOWN;

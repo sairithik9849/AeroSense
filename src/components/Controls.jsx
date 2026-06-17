@@ -1,8 +1,33 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Search, MapPin, Wind, Plane, Clock, Sparkles, Loader2, X, Thermometer, AlertTriangle, CheckCircle, ChevronDown, ChevronUp, Maximize2, Columns, BookOpen, Info, Github, Home, Database } from 'lucide-react';
+import { Search, MapPin, Wind, Clock, Sparkles, Loader2, X, Thermometer, AlertTriangle, CheckCircle, ChevronDown, Maximize2, Columns, BookOpen, Info, Github, Home, Database } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import About from './About';
 import { getApiEndpoint } from '../utils/api';
+
+// Shared markdown renderers (compact + comfortable variants)
+const compactMarkdown = {
+    p: ({ ...props }) => <p className="mb-2" {...props} />,
+    ul: ({ ...props }) => <ul className="list-disc list-inside mb-2 space-y-1 ml-1" {...props} />,
+    ol: ({ ...props }) => <ol className="list-decimal list-inside mb-2 space-y-1 ml-1" {...props} />,
+    li: ({ ...props }) => <li className="mb-1" {...props} />,
+    strong: ({ ...props }) => <strong className="font-semibold text-fg" {...props} />,
+    em: ({ ...props }) => <em className="italic" {...props} />,
+    code: ({ ...props }) => <code className="bg-surface-3 px-1 py-0.5 rounded text-accent font-mono text-[10px]" {...props} />,
+};
+
+const comfortableMarkdown = {
+    h1: ({ ...props }) => <h1 className="text-xl font-bold text-fg mt-4 mb-3" {...props} />,
+    h2: ({ ...props }) => <h2 className="text-lg font-bold text-fg mt-4 mb-2" {...props} />,
+    h3: ({ ...props }) => <h3 className="text-base font-bold text-fg mt-3 mb-2" {...props} />,
+    p: ({ ...props }) => <p className="mb-3" {...props} />,
+    ul: ({ ...props }) => <ul className="list-disc list-inside mb-3 space-y-1 ml-4" {...props} />,
+    ol: ({ ...props }) => <ol className="list-decimal list-inside mb-3 space-y-1 ml-4" {...props} />,
+    li: ({ ...props }) => <li className="mb-1" {...props} />,
+    strong: ({ ...props }) => <strong className="font-semibold text-fg" {...props} />,
+    em: ({ ...props }) => <em className="italic" {...props} />,
+    code: ({ ...props }) => <code className="bg-surface-3 px-2 py-1 rounded text-accent font-mono text-xs" {...props} />,
+    blockquote: ({ ...props }) => <blockquote className="border-l-2 border-accent/50 pl-4 italic text-fg-muted my-3" {...props} />,
+};
 
 // Expandable Section Component
 function ExpandableSection({ title, icon, content, defaultOpen = false }) {
@@ -13,41 +38,24 @@ function ExpandableSection({ title, icon, content, defaultOpen = false }) {
     }
 
     return (
-        <div className="bg-zinc-800/30 border border-zinc-700/50 rounded-lg overflow-hidden transition-all">
+        <div className="card overflow-hidden">
             <button
                 onClick={() => setIsOpen(!isOpen)}
-                className="w-full px-3 py-2 flex items-center justify-between hover:bg-zinc-800/50 transition-colors"
+                className="w-full px-3 py-2.5 flex items-center justify-between hover:bg-surface-3 transition-colors"
             >
                 <div className="flex items-center gap-2">
-                    <div className="text-zinc-400">{icon}</div>
-                    <span className="text-xs font-semibold text-zinc-300 uppercase">{title}</span>
+                    <div className="text-fg-subtle">{icon}</div>
+                    <span className="eyebrow">{title}</span>
                 </div>
-                <div className="transition-transform duration-200" style={{ transform: isOpen ? 'rotate(180deg)' : 'rotate(0deg)' }}>
-                    <ChevronDown size={14} className="text-zinc-400" />
-                </div>
+                <ChevronDown size={14} className={`text-fg-subtle transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`} />
             </button>
-            <div 
-                className={`overflow-hidden transition-all duration-300 ease-in-out ${
-                    isOpen ? 'max-h-500px opacity-100' : 'max-h-0 opacity-0'
-                }`}
-            >
-                <div className="px-3 pb-3 pt-2 border-t border-zinc-700/50">
-                    <div className="text-xs text-zinc-300 leading-relaxed">
-                        <ReactMarkdown
-                            components={{
-                                p: ({...props}) => <p className="mb-2" {...props} />,
-                                ul: ({...props}) => <ul className="list-disc list-inside mb-2 space-y-1 ml-2" {...props} />,
-                                ol: ({...props}) => <ol className="list-decimal list-inside mb-2 space-y-1 ml-2" {...props} />,
-                                li: ({...props}) => <li className="mb-1" {...props} />,
-                                strong: ({...props}) => <strong className="font-semibold text-zinc-200" {...props} />,
-                                em: ({...props}) => <em className="italic" {...props} />,
-                            }}
-                        >
-                            {content}
-                        </ReactMarkdown>
+            {isOpen && (
+                <div className="px-3 pb-3 pt-2 border-t border-border">
+                    <div className="text-xs text-fg-muted leading-relaxed">
+                        <ReactMarkdown components={compactMarkdown}>{content}</ReactMarkdown>
                     </div>
                 </div>
-            </div>
+            )}
         </div>
     );
 }
@@ -79,15 +87,16 @@ export default function Controls({
     const [results, setResults] = useState([]);
     const [analysis, setAnalysis] = useState(null);
     const [analysisLoading, setAnalysisLoading] = useState(false);
+    const [analysisError, setAnalysisError] = useState(null);
     const [showAnalysis, setShowAnalysis] = useState(false);
     const [showAnalysisModal, setShowAnalysisModal] = useState(false);
     const [showAbout, setShowAbout] = useState(false);
-    const [shortcutLabel, setShortcutLabel] = useState('Ctrl + K');
+    const [shortcutLabel, setShortcutLabel] = useState('Ctrl K');
     const searchInputRef = useRef(null);
 
     useEffect(() => {
         const isMac = typeof navigator !== 'undefined' && /mac|ipod|iphone|ipad/i.test(navigator.userAgent);
-        setShortcutLabel(isMac ? 'Cmd + K' : 'Ctrl + K');
+        setShortcutLabel(isMac ? 'Cmd K' : 'Ctrl K');
 
         const handleShortcut = (e) => {
             const key = e.key?.toLowerCase();
@@ -108,6 +117,7 @@ export default function Controls({
     useEffect(() => {
         setAnalysis(null);
         setShowAnalysis(false);
+        setAnalysisError(null);
     }, [selectedStation?.id]);
 
     // Filter Search Results
@@ -117,9 +127,8 @@ export default function Controls({
             return;
         }
 
-        // Sanitize search input - remove dangerous characters but allow alphanumeric, spaces, hyphens
         const sanitizedQuery = searchQuery.replace(/[^a-zA-Z0-9\s-]/g, '').trim();
-        
+
         if (!sanitizedQuery) {
             setResults([]);
             return;
@@ -128,583 +137,397 @@ export default function Controls({
         const filtered = stations.filter(s =>
             (s.station_name && s.station_name.toLowerCase().includes(sanitizedQuery.toLowerCase())) ||
             (s.station_id && s.station_id.toLowerCase().includes(sanitizedQuery.toLowerCase()))
-        ).slice(0, 5); // Limit to 5 results
+        ).slice(0, 5);
 
         setResults(filtered);
     }, [searchQuery, stations]);
 
-    // No playback: user selects discrete timestamps or uses slider
-
     const formatTime = (isoString) => {
         if (!isoString) return '--:--';
-        const date = new Date(isoString);
-        return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        return new Date(isoString).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
     };
 
     const formatDate = (isoString) => {
         if (!isoString) return '---';
-        const date = new Date(isoString);
-        return date.toLocaleDateString([], { month: 'short', day: 'numeric' });
+        return new Date(isoString).toLocaleDateString([], { month: 'short', day: 'numeric' });
     };
 
-    // Calculate current point info if available
+    const runAnalysis = async () => {
+        if (showAnalysis && analysis) {
+            setShowAnalysis(false);
+            return;
+        }
+        if (analysis) {
+            setShowAnalysis(true);
+            return;
+        }
+
+        setAnalysisLoading(true);
+        setAnalysisError(null);
+        try {
+            const demoQuery = useDemoData ? '&demo=true' : '';
+            const res = await fetch(getApiEndpoint(`/api/analyze?station=${selectedStation.id}${demoQuery}`));
+            if (res.ok) {
+                const data = await res.json();
+                setAnalysis(data);
+                setShowAnalysis(true);
+            } else {
+                const error = await res.json().catch(() => ({}));
+                setAnalysisError(error.error || 'Analysis could not be completed. Please try again.');
+            }
+        } catch {
+            setAnalysisError('Failed to reach the analysis service. Please try again.');
+        } finally {
+            setAnalysisLoading(false);
+        }
+    };
+
     const currentPoint = weatherData?.points?.[timeIndex];
     const maxIndex = weatherData?.points ? weatherData.points.length - 1 : 0;
+    const analysisDisabled = analysisLoading || !weatherData?.points || weatherData.points.length === 0;
+
+    const renderAnalysisBody = (variant) => {
+        const compact = variant === 'compact';
+        return (
+            <div className={compact ? 'space-y-3' : 'space-y-4'}>
+                {analysis.dataPointsAnalyzed && (
+                    <div className={`text-[10px] text-fg-subtle ${compact ? '' : 'pb-2 border-b border-border'}`}>
+                        Analyzed {analysis.dataPointsAnalyzed} data points
+                        {analysis.dateRange && (
+                            <span className="ml-2">
+                                • {new Date(analysis.dateRange.start).toLocaleDateString()} to{' '}
+                                {new Date(analysis.dateRange.end).toLocaleDateString()}
+                            </span>
+                        )}
+                    </div>
+                )}
+
+                {!analysis.summary && analysis.insights && (
+                    <div className={`${compact ? 'max-h-96 overflow-y-auto pr-2 text-xs' : 'text-sm'} text-fg-muted leading-relaxed`}>
+                        <ReactMarkdown components={compact ? compactMarkdown : comfortableMarkdown}>
+                            {analysis.insights}
+                        </ReactMarkdown>
+                    </div>
+                )}
+
+                {analysis.summary?.keyInsights?.length > 0 && (
+                    <div className="rounded-xl border border-accent/30 bg-accent/[0.07] p-3">
+                        <div className="flex items-center gap-2 mb-2">
+                            <Sparkles size={14} className="text-accent" />
+                            <span className="eyebrow text-accent/90">Key Insights</span>
+                        </div>
+                        <ul className="space-y-1.5">
+                            {(compact ? analysis.summary.keyInsights.slice(0, 4) : analysis.summary.keyInsights).map((insight, idx) => (
+                                <li key={idx} className={`${compact ? 'text-[11px]' : 'text-sm'} text-fg-muted flex items-start gap-2`}>
+                                    <span className="text-accent mt-0.5">•</span>
+                                    <span>{insight}</span>
+                                </li>
+                            ))}
+                        </ul>
+                    </div>
+                )}
+
+                {analysis.details && (
+                    <div className={`space-y-2 ${compact ? 'max-h-96 overflow-y-auto pr-2' : ''}`}>
+                        <ExpandableSection title="Wind Patterns" icon={<Wind size={14} />} content={analysis.details.windPatterns} defaultOpen={!compact} />
+                        <ExpandableSection title="Temperature Trends" icon={<Thermometer size={14} />} content={analysis.details.temperatureTrends} defaultOpen={!compact} />
+                        <ExpandableSection title="Safety Assessment" icon={<CheckCircle size={14} />} content={analysis.details.safetyAssessment} defaultOpen={!compact} />
+                        <ExpandableSection title="Weather Anomalies" icon={<AlertTriangle size={14} />} content={analysis.details.anomalies} defaultOpen={!compact} />
+                        <ExpandableSection title="Recommendations" icon={<Info size={14} />} content={analysis.details.recommendations} defaultOpen={!compact} />
+                    </div>
+                )}
+
+                <div className="pt-2 border-t border-border text-[10px] text-fg-subtle text-center">
+                    Powered by Google Gemini
+                </div>
+            </div>
+        );
+    };
 
     return (
         <>
-        <div className="absolute top-2 left-2 right-2 md:right-auto md:w-96 z-50 flex flex-col gap-2 md:gap-3 font-sans max-h-[90vh] overflow-y-auto no-scrollbar">
+            <div className="absolute top-3 left-3 right-3 md:right-auto md:w-[26rem] z-50 flex flex-col gap-3 font-sans max-h-[calc(100vh-1.5rem)] overflow-y-auto no-scrollbar">
 
-            {/* Header: Title + About Button */}
-            <div className="flex items-center justify-between px-1 gap-2">
-                <button 
-                    onClick={(e) => {
-                        e.preventDefault();
-                        e.stopPropagation();
-                        // Reset everything simultaneously
-                        if (mapRef?.current) {
-                            mapRef.current.flyTo({
-                                center: [-95, 40],
-                                zoom: 3,
-                                duration: 1500
-                            });
-                        }
-                        onResetAll?.();
-                    }}
-                    className="flex items-center gap-2 md:gap-2.5 min-w-0 hover:opacity-80 transition-opacity"
-                    title="Reset to world view"
-                >
-                    <div className="p-1 md:p-1.5 bg-blue-500/20 rounded-lg border border-blue-500/30 shrink-0">
-                        <Wind size={16} className="md:hidden text-blue-400" />
-                        <Wind size={18} className="hidden md:block text-blue-400" />
-                    </div>
-                    <h1 className="text-lg md:text-xl font-bold bg-linear-to-r from-blue-100 to-blue-400 bg-clip-text text-transparent drop-shadow-sm tracking-tight truncate">
-                        AeroSense
-                    </h1>
-                </button>
-                <div className="flex items-center gap-2">
-                    {demoEligible && (
-                        <button
-                            onClick={onToggleDemoMode}
-                            className={`p-2 rounded-lg border backdrop-blur-md transition-all shrink-0 ${
-                                useDemoData
-                                    ? 'border-amber-500/60 bg-amber-500/20 text-amber-300'
-                                    : 'border-zinc-700/60 bg-zinc-900/90 text-zinc-400 hover:text-amber-300 hover:border-amber-500/50'
-                            }`}
-                            title={useDemoData ? 'Disable demo mode' : 'Use demo data'}
-                        >
-                            <Database size={16} className="md:hidden" />
-                            <Database size={18} className="hidden md:block" />
+                {/* Header: Title + Actions */}
+                <div className="flex items-center justify-between gap-2">
+                    <button
+                        onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            if (mapRef?.current) {
+                                mapRef.current.flyTo({ center: [-95, 40], zoom: 3, duration: 1500 });
+                            }
+                            onResetAll?.();
+                        }}
+                        className="flex items-center gap-2.5 min-w-0 hover:opacity-90 transition-opacity"
+                        title="Reset to world view"
+                    >
+                        <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-accent/15 border border-accent/30 shrink-0">
+                            <Wind size={18} className="text-accent" />
+                        </div>
+                        <h1 className="text-xl font-bold text-fg tracking-tight truncate">
+                            Aero<span className="text-accent">Sense</span>
+                        </h1>
+                    </button>
+                    <div className="flex items-center gap-1.5">
+                        {demoEligible && (
+                            <button
+                                onClick={onToggleDemoMode}
+                                className={`icon-btn ${useDemoData ? 'border-caution/60 bg-caution/15 text-caution hover:text-caution' : ''}`}
+                                title={useDemoData ? 'Disable demo mode' : 'Use demo data'}
+                                aria-pressed={useDemoData}
+                            >
+                                <Database size={17} />
+                            </button>
+                        )}
+                        <button onClick={onReturnToLanding} className="icon-btn" title="Return to landing page">
+                            <Home size={17} />
                         </button>
-                    )}
-                    <button
-                        onClick={onReturnToLanding}
-                        className="p-2 rounded-lg border border-zinc-700/60 bg-zinc-900/90 backdrop-blur-md text-zinc-400 hover:text-blue-300 hover:border-blue-500/50 transition-all shrink-0"
-                        title="Return to landing page"
-                    >
-                        <Home size={16} className="md:hidden" />
-                        <Home size={18} className="hidden md:block" />
-                    </button>
-                    <a
-                        href="https://github.com/sairithik9849/AeroSense"
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="p-2 rounded-lg border border-zinc-700/60 bg-zinc-900/90 backdrop-blur-md text-zinc-400 hover:text-blue-300 hover:border-blue-500/50 transition-all shrink-0"
-                        title="View on GitHub"
-                    >
-                        <Github size={16} className="md:hidden" />
-                        <Github size={18} className="hidden md:block" />
-                    </a>
-                    <button
-                        onClick={() => setShowAbout(true)}
-                        className="p-2 rounded-lg border border-zinc-700/60 bg-zinc-900/90 backdrop-blur-md text-zinc-400 hover:text-blue-300 hover:border-blue-500/50 transition-all shrink-0"
-                        title="Learn more about AeroSense"
-                    >
-                        <BookOpen size={16} className="md:hidden" />
-                        <BookOpen size={18} className="hidden md:block" />
-                    </button>
-                </div>
-            </div>
-
-            {/* Search Bar */}
-            <div className="relative group">
-                {/* Outer glow */}
-                <div className="absolute inset-0 rounded-2xl bg-linear-to-r from-blue-500/30 via-blue-400/20 to-transparent opacity-0 group-focus-within:opacity-100 transition-opacity duration-300 blur" />
-
-                <div className="relative w-full rounded-2xl bg-zinc-950/85 border border-zinc-700/60 backdrop-blur-2xl shadow-[0_12px_45px_-20px_rgba(59,130,246,0.5)] overflow-hidden transition-all duration-200 hover:border-blue-500/40">
-                    {/* Inner stroke */}
-                    <div className="pointer-events-none absolute inset-px rounded-[14px] border border-white/5" />
-
-                    <div className="absolute inset-y-0 left-4 flex items-center pointer-events-none text-zinc-500 group-focus-within:text-blue-200 transition-colors">
-                        <Search size={18} />
-                    </div>
-
-                    <input
-                        ref={searchInputRef}
-                        type="text"
-                        value={searchQuery}
-                        onChange={(e) => setSearchQuery(e.target.value)}
-                        placeholder="Search stations or IDs"
-                        className="w-full bg-transparent text-white text-sm md:text-base pl-12 pr-28 py-3.5 rounded-2xl focus:outline-none focus:ring-4 focus:ring-blue-500/18 placeholder:text-zinc-500 transition-all"
-                    />
-
-                    {/* Right controls */}
-                    <div className="absolute inset-y-0 right-3 flex items-center">
-                        <span className="px-3 py-1.5 text-[11px] leading-none rounded-xl border border-blue-500/45 bg-linear-to-r from-blue-600/30 via-blue-500/25 to-blue-400/20 text-blue-50 shadow-[0_6px_18px_-10px_rgba(59,130,246,0.9)] select-none">
-                            {shortcutLabel}
-                        </span>
+                        <a
+                            href="https://github.com/sairithik9849/AeroSense"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="icon-btn"
+                            title="View on GitHub"
+                        >
+                            <Github size={17} />
+                        </a>
+                        <button onClick={() => setShowAbout(true)} className="icon-btn" title="About AeroSense">
+                            <BookOpen size={17} />
+                        </button>
                     </div>
                 </div>
-            </div>
 
-            {/* Time Travel Controls (Optimized for Visibility) */}
-            {weatherData && (
-                <div className="bg-zinc-900/90 backdrop-blur-md border border-zinc-700/50 rounded-xl p-4 shadow-xl animate-in fade-in slide-in-from-top-2">
-                    <div className="flex justify-between items-center mb-3">
-                        <div className="flex items-center gap-2 text-zinc-300">
-                            <div className="p-1.5 bg-purple-500/20 rounded text-purple-400">
-                                <Clock size={16} />
+                {/* Search Bar */}
+                <div className="relative group">
+                    <div className="relative panel rounded-xl overflow-hidden transition-colors group-focus-within:border-accent/60">
+                        <div className="absolute inset-y-0 left-3.5 flex items-center pointer-events-none text-fg-subtle group-focus-within:text-accent transition-colors">
+                            <Search size={18} />
+                        </div>
+                        <input
+                            ref={searchInputRef}
+                            type="text"
+                            value={searchQuery}
+                            onChange={(e) => setSearchQuery(e.target.value)}
+                            placeholder="Search stations or station IDs"
+                            aria-label="Search weather stations"
+                            className="w-full bg-transparent text-fg text-sm md:text-[15px] pl-11 pr-20 py-3.5 focus:outline-none placeholder:text-fg-subtle"
+                        />
+                        <div className="absolute inset-y-0 right-3 flex items-center">
+                            <kbd className="px-2 py-1 text-[10px] font-medium leading-none rounded-md border border-border bg-surface-2 text-fg-subtle select-none">
+                                {shortcutLabel}
+                            </kbd>
+                        </div>
+                    </div>
+                </div>
+
+                {/* Search Results */}
+                {results.length > 0 && (
+                    <div className="panel overflow-hidden max-h-64 overflow-y-auto no-scrollbar animate-panel-in">
+                        {results.map((station) => (
+                            <button
+                                key={station.station_id}
+                                onClick={() => onSelect(station)}
+                                className="w-full text-left px-3.5 py-3 hover:bg-surface-3 transition-colors flex items-center gap-3 border-b border-border last:border-0"
+                            >
+                                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-accent/10 text-accent shrink-0">
+                                    <MapPin size={15} />
+                                </div>
+                                <div className="min-w-0 flex-1">
+                                    <p className="font-medium text-sm text-fg truncate">{station.station_name || "Unknown Station"}</p>
+                                    <p className="text-xs text-fg-subtle font-mono">{station.station_id}</p>
+                                </div>
+                            </button>
+                        ))}
+                    </div>
+                )}
+
+                {/* Time Travel + Analysis */}
+                {weatherData && (
+                    <div className="panel p-4 animate-panel-in">
+                        <div className="flex justify-between items-center mb-4">
+                            <div className="flex items-center gap-2.5">
+                                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-surface-3 text-fg-muted">
+                                    <Clock size={16} />
+                                </div>
+                                <div className="leading-tight">
+                                    <p className="eyebrow">Historical View</p>
+                                    <p className="font-mono text-sm font-semibold text-fg flex gap-2">
+                                        {formatDate(currentPoint?.timestamp)}
+                                        <span className="text-fg-subtle">·</span>
+                                        {formatTime(currentPoint?.timestamp)}
+                                    </p>
+                                </div>
                             </div>
-                            <div className="leading-tight">
-                                <p className="text-xs text-zinc-500 font-bold uppercase tracking-wide">Historical View</p>
-                                <p className="font-mono text-sm font-bold text-white flex gap-2">
-                                    {formatDate(currentPoint?.timestamp)}
-                                    <span className="text-zinc-500">|</span>
-                                    {formatTime(currentPoint?.timestamp)}
-                                </p>
+
+                            <div className="flex items-center gap-1.5">
+                                <button
+                                    onClick={() => setWindAnimationPaused(!windAnimationPaused)}
+                                    className={`icon-btn ${!windAnimationPaused ? 'border-accent/50 bg-accent/15 text-accent hover:text-accent' : ''}`}
+                                    title={windAnimationPaused ? 'Resume wind animation' : 'Pause wind animation'}
+                                    aria-pressed={!windAnimationPaused}
+                                >
+                                    <Wind size={16} />
+                                </button>
+                                <button
+                                    onClick={() => {
+                                        const next = !compareEnabled;
+                                        setCompareEnabled(next);
+                                        setWindAnimationPaused(!next ? true : false);
+                                    }}
+                                    className={`icon-btn ${compareEnabled ? 'border-safe/50 bg-safe/15 text-safe hover:text-safe' : ''}`}
+                                    title={compareEnabled ? 'Disable compare view' : 'Enable compare view'}
+                                    aria-pressed={compareEnabled}
+                                >
+                                    <Columns size={16} />
+                                </button>
                             </div>
                         </div>
 
-                        <div className="flex items-center gap-2">
-                            {/* Wind Animation Toggle Button */}
-                            <button
-                                onClick={() => setWindAnimationPaused(!windAnimationPaused)}
-                                className={`p-2 rounded-full border transition-all hover:scale-105 active:scale-95 ${
-                                    windAnimationPaused
-                                        ? 'bg-zinc-800/50 text-zinc-400 border-zinc-600/50'
-                                        : 'bg-blue-500/20 text-blue-400 border-blue-500/50'
-                                }`}
-                                title={windAnimationPaused ? 'Resume wind animation' : 'Pause wind animation'}
-                            >
-                                <Wind size={16} />
-                            </button>
-
-                            {/* Compare Toggle */}
-                            <button
-                                onClick={() => {
-                                    const next = !compareEnabled;
-                                    setCompareEnabled(next);
-                                    // Auto start/stop wind animation with compare toggle
-                                    setWindAnimationPaused(!next ? true : false);
-                                }}
-                                className={`p-2 rounded-full border transition-all hover:scale-105 active:scale-95 ${compareEnabled
-                                    ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/50'
-                                    : 'bg-zinc-700/50 text-zinc-400 border-zinc-600/50'
-                                }`}
-                                title={compareEnabled ? 'Disable compare view' : 'Enable compare view'}
-                            >
-                                <Columns size={16} />
-                            </button>
-                        </div>
-                    </div>
-
-                    <div className="relative h-6 flex items-center">
                         <input
                             type="range"
                             min="0"
                             max={maxIndex}
                             value={timeIndex}
-                            onChange={(e) => {
-                                setTimeIndex(Number(e.target.value));
-                            }}
-                            className="w-full h-1.5 bg-zinc-700 rounded-lg appearance-none cursor-pointer accent-blue-500 hover:accent-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-500/50"
+                            onChange={(e) => setTimeIndex(Number(e.target.value))}
+                            aria-label="Select historical time"
+                            className="slider w-full"
                         />
-                    </div>
-                    {/* Compare pickers */}
-                    {compareEnabled && weatherData?.points && weatherData.points.length > 1 && (
-                        <div className="mt-3 grid grid-cols-2 gap-3">
-                            <div>
-                                <div className="flex items-center gap-2 mb-1">
-                                    <span className="text-[10px] uppercase text-zinc-500 font-bold">Compare A</span>
-                                    <span className="text-[10px] font-mono text-zinc-400">
-                                        {formatDate(weatherData.points?.[compareIndexA]?.timestamp)}
-                                        {' '}|{' '}
-                                        {formatTime(weatherData.points?.[compareIndexA]?.timestamp)}
-                                    </span>
-                                </div>
-                                <input
-                                    type="range"
-                                    min="0"
-                                    max={maxIndex}
-                                    value={Math.min(Math.max(0, compareIndexA ?? 0), maxIndex)}
-                                    onChange={(e) => setCompareIndexA(Number(e.target.value))}
-                                    className="w-full h-1.5 bg-zinc-700 rounded-lg appearance-none cursor-pointer accent-emerald-500 hover:accent-emerald-400 focus:outline-none focus:ring-2 focus:ring-emerald-500/40"
-                                />
-                            </div>
-                            <div>
-                                <div className="flex items-center gap-2 mb-1">
-                                    <span className="text-[10px] uppercase text-zinc-500 font-bold">Compare B</span>
-                                    <span className="text-[10px] font-mono text-zinc-400">
-                                        {formatDate(weatherData.points?.[compareIndexB]?.timestamp)}
-                                        {' '}|{' '}
-                                        {formatTime(weatherData.points?.[compareIndexB]?.timestamp)}
-                                    </span>
-                                </div>
-                                <input
-                                    type="range"
-                                    min="0"
-                                    max={maxIndex}
-                                    value={Math.min(Math.max(0, compareIndexB ?? 0), maxIndex)}
-                                    onChange={(e) => setCompareIndexB(Number(e.target.value))}
-                                    className="w-full h-1.5 bg-zinc-700 rounded-lg appearance-none cursor-pointer accent-amber-500 hover:accent-amber-400 focus:outline-none focus:ring-2 focus:ring-amber-500/40"
-                                />
-                            </div>
+                        <div className="flex justify-between text-[10px] text-fg-subtle font-mono mt-1.5">
+                            <span>Start</span>
+                            <span>Now</span>
                         </div>
-                    )}
 
-                    <div className="flex justify-between text-[10px] text-zinc-500 font-mono mt-1">
-                        <span>Start</span>
-                        <span>Now</span>
-                    </div>
-
-                    {/* Analysis Section - Show when station is selected */}
-                    {selectedStation && (
-                        <div className="mt-4 pt-4 border-t border-zinc-700/50">
-                            <div className="flex items-center justify-between mb-3">
-                                <div className="flex items-center gap-2">
-                                    <div className="p-1.5 bg-purple-500/20 rounded text-purple-400">
-                                        <Sparkles size={14} />
-                                    </div>
-                                    <h3 className="text-xs font-semibold text-zinc-300 uppercase tracking-wide">
-                                        AI Analysis
-                                    </h3>
-                                </div>
-                                <div className="flex items-center gap-2">
-                                    {analysis && (
-                                        <button
-                                            onClick={() => setShowAnalysisModal(true)}
-                                            className="p-1.5 rounded border border-purple-500/30 text-purple-400 hover:bg-purple-500/20 transition-all"
-                                            title="Open in larger window"
-                                        >
-                                            <Maximize2 size={14} />
-                                        </button>
-                                    )}
-                                    <button
-                                    onClick={async () => {
-                                        if (showAnalysis && analysis) {
-                                            setShowAnalysis(false);
-                                            return;
-                                        }
-                                        
-                                        if (analysis) {
-                                            setShowAnalysis(true);
-                                            return;
-                                        }
-
-                                        setAnalysisLoading(true);
-                                        try {
-                                            const demoQuery = useDemoData ? '&demo=true' : '';
-                                            const res = await fetch(getApiEndpoint(`/api/analyze?station=${selectedStation.id}${demoQuery}`));
-                                            if (res.ok) {
-                                                const data = await res.json();
-                                                setAnalysis(data);
-                                                setShowAnalysis(true);
-                                            } else {
-                                                const error = await res.json();
-                                                alert(`Analysis failed: ${error.error || 'Unknown error'}`);
-                                            }
-                                        } catch {
-                                            alert('Failed to analyze station data. Please try again.');
-                                        } finally {
-                                            setAnalysisLoading(false);
-                                        }
-                                    }}
-                                    disabled={analysisLoading || !weatherData?.points || weatherData.points.length === 0}
-                                    className={`px-3 py-2 rounded-lg border transition-all hover:scale-105 active:scale-95 flex items-center gap-2 ${
-                                        showAnalysis && analysis
-                                            ? 'bg-purple-500/20 text-purple-400 border-purple-500/50'
-                                            : analysisLoading || !weatherData?.points || weatherData.points.length === 0
-                                            ? 'bg-zinc-700/50 text-zinc-500 border-zinc-600/50 cursor-not-allowed'
-                                            : 'bg-purple-500/20 text-purple-400 border-purple-500/50 hover:bg-purple-500/30'
-                                    }`}
-                                    title={showAnalysis && analysis ? "Hide analysis" : analysisLoading ? "Loading analysis..." : "Analyze station data with AI"}
-                                >
-                                    {analysisLoading ? (
-                                        <>
-                                            <Loader2 size={16} className="animate-spin" />
-                                            <span className="text-xs font-semibold\">Analyzing...</span>
-                                        </>
-                                    ) : showAnalysis && analysis ? (
-                                        <>
-                                            <X size={16} />
-                                            <span className="text-xs">Hide</span>
-                                        </>
-                                    ) : (
-                                        <>
-                                            <Sparkles size={16} />
-                                            <span className="text-xs">Analyze</span>
-                                        </>
-                                    )}
-                                </button>
-                            </div>
-                            </div>
-
-                            {showAnalysis && analysis && (
-                                <div className="mt-3 space-y-3">
-                                    {/* Analysis Metadata */}
-                                    {analysis.dataPointsAnalyzed && (
-                                        <div className="text-[10px] text-zinc-500">
-                                            Analyzed {analysis.dataPointsAnalyzed} data points
-                                            {analysis.dateRange && (
-                                                <span className="ml-2">
-                                                    • {new Date(analysis.dateRange.start).toLocaleDateString()} to{' '}
-                                                    {new Date(analysis.dateRange.end).toLocaleDateString()}
-                                                </span>
-                                            )}
+                        {/* Compare pickers */}
+                        {compareEnabled && weatherData?.points && weatherData.points.length > 1 && (
+                            <div className="mt-4 grid grid-cols-2 gap-3">
+                                {[
+                                    { label: 'Compare A', idx: compareIndexA, set: setCompareIndexA, cls: 'slider-safe' },
+                                    { label: 'Compare B', idx: compareIndexB, set: setCompareIndexB, cls: 'slider-caution' },
+                                ].map((item) => (
+                                    <div key={item.label}>
+                                        <div className="flex items-center justify-between mb-1.5">
+                                            <span className="eyebrow">{item.label}</span>
                                         </div>
-                                    )}
+                                        <p className="text-[10px] font-mono text-fg-muted mb-1.5">
+                                            {formatDate(weatherData.points?.[item.idx]?.timestamp)} · {formatTime(weatherData.points?.[item.idx]?.timestamp)}
+                                        </p>
+                                        <input
+                                            type="range"
+                                            min="0"
+                                            max={maxIndex}
+                                            value={Math.min(Math.max(0, item.idx ?? 0), maxIndex)}
+                                            onChange={(e) => item.set(Number(e.target.value))}
+                                            aria-label={item.label}
+                                            className={`slider ${item.cls} w-full`}
+                                        />
+                                    </div>
+                                ))}
+                            </div>
+                        )}
 
-                                    {/* Backward compatibility: Show old format if summary doesn't exist */}
-                                    {!analysis.summary && analysis.insights && (
-                                        <div className="max-h-96 overflow-y-auto pr-2 custom-scrollbar text-xs text-zinc-300 leading-relaxed">
-                                            <ReactMarkdown
-                                                components={{
-                                                    h1: ({...props}) => <h1 className="text-base font-bold text-zinc-200 mt-3 mb-2" {...props} />,
-                                                    h2: ({...props}) => <h2 className="text-sm font-bold text-zinc-200 mt-3 mb-2" {...props} />,
-                                                    h3: ({...props}) => <h3 className="text-xs font-bold text-zinc-200 mt-2 mb-1" {...props} />,
-                                                    p: ({...props}) => <p className="mb-2" {...props} />,
-                                                    ul: ({...props}) => <ul className="list-disc list-inside mb-2 space-y-1" {...props} />,
-                                                    ol: ({...props}) => <ol className="list-decimal list-inside mb-2 space-y-1" {...props} />,
-                                                    li: ({...props}) => <li className="ml-2" {...props} />,
-                                                    strong: ({...props}) => <strong className="font-semibold text-zinc-200" {...props} />,
-                                                    em: ({...props}) => <em className="italic" {...props} />,
-                                                    code: ({...props}) => <code className="bg-zinc-800 px-1 py-0.5 rounded text-purple-400 font-mono text-[10px]" {...props} />,
-                                                    blockquote: ({...props}) => <blockquote className="border-l-2 border-purple-500/50 pl-2 italic text-zinc-400" {...props} />,
-                                                }}
+                        {/* Analysis Section */}
+                        {selectedStation && (
+                            <div className="mt-4 pt-4 border-t border-border">
+                                <div className="flex items-center justify-between">
+                                    <div className="flex items-center gap-2.5">
+                                        <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-surface-3 text-fg-muted">
+                                            <Sparkles size={15} />
+                                        </div>
+                                        <h3 className="eyebrow">AI Analysis</h3>
+                                    </div>
+                                    <div className="flex items-center gap-1.5">
+                                        {analysis && (
+                                            <button
+                                                onClick={() => setShowAnalysisModal(true)}
+                                                className="icon-btn"
+                                                title="Open in larger window"
                                             >
-                                                {analysis.insights}
-                                            </ReactMarkdown>
-                                        </div>
-                                    )}
-
-                                    {/* Key Insights Card */}
-                                    {analysis.summary && analysis.summary.keyInsights && analysis.summary.keyInsights.length > 0 && (
-                                        <div className="bg-purple-500/10 border border-purple-500/30 rounded-lg p-3">
-                                            <div className="flex items-center gap-2 mb-2">
-                                                <Sparkles size={14} className="text-purple-400" />
-                                                <span className="text-xs font-semibold text-zinc-300 uppercase">Key Insights</span>
-                                            </div>
-                                            <ul className="space-y-1.5">
-                                                {analysis.summary.keyInsights.slice(0, 4).map((insight, idx) => (
-                                                    <li key={idx} className="text-[11px] text-zinc-300 flex items-start gap-1.5">
-                                                        <span className="text-purple-400 mt-0.5">•</span>
-                                                        <span>{insight}</span>
-                                                    </li>
-                                                ))}
-                                            </ul>
-                                        </div>
-                                    )}
-
-                                    {/* Expandable Details Sections */}
-                                    {analysis.details && (
-                                        <div className="space-y-2 max-h-96 overflow-y-auto pr-2 custom-scrollbar">
-                                            <ExpandableSection
-                                                title="Wind Patterns"
-                                                icon={<Wind size={14} />}
-                                                content={analysis.details.windPatterns}
-                                                defaultOpen={false}
-                                            />
-                                            <ExpandableSection
-                                                title="Temperature Trends"
-                                                icon={<Thermometer size={14} />}
-                                                content={analysis.details.temperatureTrends}
-                                                defaultOpen={false}
-                                            />
-                                            <ExpandableSection
-                                                title="Safety Assessment"
-                                                icon={<CheckCircle size={14} />}
-                                                content={analysis.details.safetyAssessment}
-                                                defaultOpen={false}
-                                            />
-                                            <ExpandableSection
-                                                title="Weather Anomalies"
-                                                icon={<AlertTriangle size={14} />}
-                                                content={analysis.details.anomalies}
-                                                defaultOpen={false}
-                                            />
-                                            <ExpandableSection
-                                                title="Recommendations"
-                                                icon={<Info size={14} />}
-                                                content={analysis.details.recommendations}
-                                                defaultOpen={false}
-                                            />
-                                        </div>
-                                    )}
-
-                                    {/* Footer */}
-                                    <div className="pt-2 border-t border-zinc-800 text-[9px] text-zinc-600 text-center">
-                                        Powered by Google Gemini AI
+                                                <Maximize2 size={15} />
+                                            </button>
+                                        )}
+                                        <button
+                                            onClick={runAnalysis}
+                                            disabled={analysisDisabled}
+                                            className={showAnalysis && analysis ? 'btn-secondary !py-2' : 'btn-primary !py-2'}
+                                            title={showAnalysis && analysis ? 'Hide analysis' : 'Analyze station data with AI'}
+                                        >
+                                            {analysisLoading ? (
+                                                <>
+                                                    <Loader2 size={15} className="animate-spin" />
+                                                    <span className="text-xs">Analyzing</span>
+                                                </>
+                                            ) : showAnalysis && analysis ? (
+                                                <>
+                                                    <X size={15} />
+                                                    <span className="text-xs">Hide</span>
+                                                </>
+                                            ) : (
+                                                <>
+                                                    <Sparkles size={15} />
+                                                    <span className="text-xs">Analyze</span>
+                                                </>
+                                            )}
+                                        </button>
                                     </div>
                                 </div>
-                            )}
-                        </div>
-                    )}
-                </div>
-            )}
 
-            {results.length > 0 && (
-                <div className="bg-zinc-900/95 backdrop-blur-md border border-zinc-700 rounded-lg md:rounded-xl shadow-2xl overflow-hidden max-h-48 md:max-h-64 overflow-y-auto custom-scrollbar">
-                    {results.map((station) => (
-                        <button
-                            key={station.station_id}
-                            onClick={() => onSelect(station)}
-                            className="w-full text-left px-3 md:px-4 py-2 md:py-3 hover:bg-zinc-800/50 transition flex items-center gap-2 md:gap-3 border-b border-zinc-800 last:border-0"
-                        >
-                            <div className="p-1.5 md:p-2 bg-blue-500/10 rounded-full text-blue-400 shrink-0">
-                                <MapPin size={14} className="md:hidden" />
-                                <MapPin size={16} className="hidden md:block" />
-                            </div>
-                            <div className="min-w-0 flex-1">
-                                <p className="font-bold text-xs md:text-sm text-zinc-200 truncate">{station.station_name || "Unknown Station"}</p>
-                                <p className="text-[10px] md:text-xs text-zinc-500 font-mono">{station.station_id}</p>
-                            </div>
-                        </button>
-                    ))}
-                </div>
-            )}
-
-        </div>
-
-        {/* Analysis Modal - Outside main Controls div for proper z-index */}
-        {showAnalysisModal && analysis && (
-            <div className="fixed inset-0 z-100 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
-                <div className="bg-zinc-900 border border-zinc-700 rounded-xl shadow-2xl w-full max-w-4xl max-h-[90vh] flex flex-col overflow-hidden">
-                    {/* Modal Header */}
-                    <div className="p-4 border-b border-zinc-700 flex items-center justify-between bg-zinc-800/50">
-                        <div className="flex items-center gap-3">
-                            <div className="p-2 bg-purple-500/20 rounded-lg text-purple-400">
-                                <Sparkles size={20} />
-                            </div>
-                            <div>
-                                <h2 className="text-lg font-bold text-white">AI Analysis</h2>
-                                {selectedStation && (
-                                    <p className="text-xs text-zinc-400">{selectedStation.name || selectedStation.id}</p>
+                                {analysisError && (
+                                    <div className="mt-3 rounded-lg border border-danger/30 bg-danger/10 p-3 text-xs text-danger flex items-start gap-2">
+                                        <AlertTriangle size={14} className="mt-0.5 shrink-0" />
+                                        <span>{analysisError}</span>
+                                    </div>
                                 )}
-                            </div>
-                        </div>
-                        <button
-                            onClick={() => setShowAnalysisModal(false)}
-                            className="p-2 hover:bg-zinc-800 rounded-lg transition text-zinc-400 hover:text-white"
-                        >
-                            <X size={20} />
-                        </button>
-                    </div>
 
-                    {/* Modal Content */}
-                    <div className="flex-1 overflow-y-auto p-6 space-y-4 custom-scrollbar">
-                        {/* Analysis Metadata */}
-                        {analysis.dataPointsAnalyzed && (
-                            <div className="text-xs text-zinc-500 pb-2 border-b border-zinc-800">
-                                Analyzed {analysis.dataPointsAnalyzed} data points
-                                {analysis.dateRange && (
-                                    <span className="ml-2">
-                                        • {new Date(analysis.dateRange.start).toLocaleDateString()} to{' '}
-                                        {new Date(analysis.dateRange.end).toLocaleDateString()}
-                                    </span>
+                                {showAnalysis && analysis && (
+                                    <div className="mt-3">
+                                        {renderAnalysisBody('compact')}
+                                    </div>
                                 )}
                             </div>
                         )}
-
-                        {/* Backward compatibility: Show old format if summary doesn't exist */}
-                        {!analysis.summary && analysis.insights && (
-                            <div className="text-sm text-zinc-300 leading-relaxed">
-                                <ReactMarkdown
-                                    components={{
-                                        h1: ({...props}) => <h1 className="text-xl font-bold text-zinc-200 mt-4 mb-3" {...props} />,
-                                        h2: ({...props}) => <h2 className="text-lg font-bold text-zinc-200 mt-4 mb-2" {...props} />,
-                                        h3: ({...props}) => <h3 className="text-base font-bold text-zinc-200 mt-3 mb-2" {...props} />,
-                                        p: ({...props}) => <p className="mb-3" {...props} />,
-                                        ul: ({...props}) => <ul className="list-disc list-inside mb-3 space-y-1 ml-4" {...props} />,
-                                        ol: ({...props}) => <ol className="list-decimal list-inside mb-3 space-y-1 ml-4" {...props} />,
-                                        li: ({...props}) => <li className="mb-1" {...props} />,
-                                        strong: ({...props}) => <strong className="font-semibold text-zinc-200" {...props} />,
-                                        em: ({...props}) => <em className="italic" {...props} />,
-                                        code: ({...props}) => <code className="bg-zinc-800 px-2 py-1 rounded text-purple-400 font-mono text-xs" {...props} />,
-                                        blockquote: ({...props}) => <blockquote className="border-l-2 border-purple-500/50 pl-4 italic text-zinc-400 my-3" {...props} />,
-                                    }}
-                                >
-                                    {analysis.insights}
-                                </ReactMarkdown>
-                            </div>
-                        )}
-
-                        {/* Key Insights Card */}
-                        {analysis.summary && analysis.summary.keyInsights && analysis.summary.keyInsights.length > 0 && (
-                            <div className="bg-purple-500/10 border border-purple-500/30 rounded-lg p-4">
-                                <div className="flex items-center gap-2 mb-3">
-                                    <Sparkles size={16} className="text-purple-400" />
-                                    <span className="text-sm font-semibold text-zinc-300 uppercase">Key Insights</span>
-                                </div>
-                                <ul className="space-y-2">
-                                    {analysis.summary.keyInsights.map((insight, idx) => (
-                                        <li key={idx} className="text-sm text-zinc-300 flex items-start gap-2">
-                                            <span className="text-purple-400 mt-1">•</span>
-                                            <span>{insight}</span>
-                                        </li>
-                                    ))}
-                                </ul>
-                            </div>
-                        )}
-
-                        {/* Expandable Details Sections */}
-                        {analysis.details && (
-                            <div className="space-y-3">
-                                <ExpandableSection
-                                    title="Wind Patterns"
-                                    icon={<Wind size={16} />}
-                                    content={analysis.details.windPatterns}
-                                    defaultOpen={true}
-                                />
-                                <ExpandableSection
-                                    title="Temperature Trends"
-                                    icon={<Thermometer size={16} />}
-                                    content={analysis.details.temperatureTrends}
-                                    defaultOpen={true}
-                                />
-                                <ExpandableSection
-                                    title="Safety Assessment"
-                                    icon={<CheckCircle size={16} />}
-                                    content={analysis.details.safetyAssessment}
-                                    defaultOpen={true}
-                                />
-                                <ExpandableSection
-                                    title="Weather Anomalies"
-                                    icon={<AlertTriangle size={16} />}
-                                    content={analysis.details.anomalies}
-                                    defaultOpen={true}
-                                />
-                                <ExpandableSection
-                                    title="Recommendations"
-                                    icon={<Info size={16} />}
-                                    content={analysis.details.recommendations}
-                                    defaultOpen={true}
-                                />
-                            </div>
-                        )}
                     </div>
-
-                    {/* Modal Footer */}
-                    <div className="p-4 border-t border-zinc-800 bg-zinc-800/30 text-xs text-zinc-600 text-center">
-                        Powered by Google Gemini AI
-                    </div>
-                </div>
+                )}
             </div>
-        )}
 
-        {/* About Modal */}
-        {showAbout && (
-            <About onClose={() => setShowAbout(false)} />
-        )}
+            {/* Analysis Modal */}
+            {showAnalysisModal && analysis && (
+                <div
+                    className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-background/85 backdrop-blur-sm animate-fade-in"
+                    onClick={() => setShowAnalysisModal(false)}
+                    role="dialog"
+                    aria-modal="true"
+                    aria-label="AI weather analysis"
+                >
+                    <div
+                        className="panel w-full max-w-3xl max-h-[90vh] flex flex-col overflow-hidden animate-modal-in"
+                        onClick={(e) => e.stopPropagation()}
+                    >
+                        <div className="p-4 border-b border-border flex items-center justify-between">
+                            <div className="flex items-center gap-3">
+                                <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-accent/15 text-accent border border-accent/20">
+                                    <Sparkles size={20} />
+                                </div>
+                                <div>
+                                    <h2 className="text-base font-bold text-fg">AI Weather Analysis</h2>
+                                    {selectedStation && (
+                                        <p className="text-xs text-fg-subtle">{selectedStation.name || selectedStation.id}</p>
+                                    )}
+                                </div>
+                            </div>
+                            <button onClick={() => setShowAnalysisModal(false)} className="icon-btn" aria-label="Close analysis">
+                                <X size={18} />
+                            </button>
+                        </div>
+                        <div className="flex-1 overflow-y-auto p-5">
+                            {renderAnalysisBody('comfortable')}
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* About Modal */}
+            {showAbout && <About onClose={() => setShowAbout(false)} />}
         </>
     );
 }
