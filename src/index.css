@@ -1,66 +1,202 @@
 @import "tailwindcss";
 
 @theme {
-  --color-background: #09090b;
-  --color-surface: #18181b;
-  --color-border: #27272a;
+  /* ---- Surfaces (neutral scale) ---- */
+  --color-background: #0a0c10; /* app base */
+  --color-surface: #12151c; /* panels / cards */
+  --color-surface-2: #181c25; /* raised elements inside panels */
+  --color-surface-3: #20242f; /* hover / active fills */
+  --color-border: #262b36; /* hairline borders */
+  --color-border-strong: #333a48; /* emphasized borders */
 
+  /* ---- Text ---- */
+  --color-fg: #f4f6fb; /* primary text */
+  --color-fg-muted: #a4adbe; /* secondary text */
+  --color-fg-subtle: #6b7385; /* tertiary / captions */
+
+  /* ---- Brand (single accent: aviation blue) ---- */
+  --color-accent: #3b82f6;
+  --color-accent-soft: #1d2b46;
+
+  /* ---- Functional status colors ---- */
   --color-safe: #10b981;
   --color-caution: #f59e0b;
   --color-danger: #ef4444;
 
-  --color-accent: #3b82f6;
+  --font-sans: "Inter", system-ui, -apple-system, sans-serif;
+  --font-mono: "JetBrains Mono", "SFMono-Regular", Menlo, monospace;
 
-  --font-sans: Inter, system-ui, sans-serif;
-  --font-mono: "JetBrains Mono", Menlo, monospace;
+  --radius: 0.875rem;
 }
 
 :root {
-  /* Force dark mode by default */
   color-scheme: dark;
 }
 
-body {
-  @apply bg-background text-zinc-100 antialiased overflow-hidden;
-  /* overflow-hidden prevents scrollbars since the map is full screen */
+html {
+  background-color: var(--color-background);
 }
 
-/* Custom Scrollbar for the Sidebar */
+body {
+  @apply bg-background text-fg antialiased overflow-hidden;
+  font-feature-settings: "cv11", "ss01";
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+/* ----------------------------------------------------------------
+   Scrollbars
+---------------------------------------------------------------- */
 ::-webkit-scrollbar {
-  width: 6px;
+  width: 8px;
+  height: 8px;
 }
 ::-webkit-scrollbar-track {
-  @apply bg-surface;
+  background: transparent;
 }
 ::-webkit-scrollbar-thumb {
-  @apply bg-zinc-600 rounded-full;
+  background: var(--color-border-strong);
+  border-radius: 9999px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #424a5c;
 }
 
 .no-scrollbar {
   -ms-overflow-style: none;
   scrollbar-width: none;
 }
-
 .no-scrollbar::-webkit-scrollbar {
   display: none;
 }
 
-/* Landing Page Animations */
+/* ----------------------------------------------------------------
+   Accessible focus ring (consistent across all interactive elements)
+---------------------------------------------------------------- */
+:where(button, a, input, [role="button"], [tabindex]):focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
+  border-radius: 0.5rem;
+}
+
+/* ----------------------------------------------------------------
+   Reusable component primitives
+---------------------------------------------------------------- */
+@layer components {
+  /* Glassy floating panel used across map overlays */
+  .panel {
+    @apply bg-surface/90 backdrop-blur-xl border border-border rounded-2xl shadow-[0_16px_48px_-24px_rgba(0,0,0,0.9)];
+  }
+
+  /* Section / metric card inside a panel */
+  .card {
+    @apply bg-surface-2 border border-border rounded-xl;
+  }
+
+  /* Icon button (square, ghost) */
+  .icon-btn {
+    @apply inline-flex items-center justify-center h-9 w-9 rounded-lg border border-border bg-surface-2 text-fg-muted transition-colors hover:text-fg hover:border-border-strong hover:bg-surface-3 disabled:opacity-50 disabled:cursor-not-allowed;
+  }
+
+  /* Primary button */
+  .btn-primary {
+    @apply inline-flex items-center justify-center gap-2 rounded-lg bg-accent px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-blue-500 disabled:opacity-50 disabled:cursor-not-allowed;
+  }
+
+  /* Secondary button */
+  .btn-secondary {
+    @apply inline-flex items-center justify-center gap-2 rounded-lg border border-border bg-surface-2 px-4 py-2.5 text-sm font-medium text-fg-muted transition-colors hover:text-fg hover:border-border-strong disabled:opacity-50 disabled:cursor-not-allowed;
+  }
+
+  /* Section label / eyebrow */
+  .eyebrow {
+    @apply text-[11px] font-semibold uppercase tracking-[0.08em] text-fg-subtle;
+  }
+
+  /* Generic small pill */
+  .chip {
+    @apply inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[11px] font-medium;
+  }
+}
+
+/* ----------------------------------------------------------------
+   Range slider styling (consistent track + thumb)
+---------------------------------------------------------------- */
+input[type="range"].slider {
+  -webkit-appearance: none;
+  appearance: none;
+  height: 6px;
+  border-radius: 9999px;
+  background: var(--color-surface-3);
+  cursor: pointer;
+}
+input[type="range"].slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  height: 16px;
+  width: 16px;
+  border-radius: 9999px;
+  background: var(--color-accent);
+  border: 2px solid var(--color-surface);
+  box-shadow: 0 0 0 1px var(--color-accent);
+  transition: transform 0.12s ease;
+}
+input[type="range"].slider::-webkit-slider-thumb:hover {
+  transform: scale(1.15);
+}
+input[type="range"].slider::-moz-range-thumb {
+  height: 16px;
+  width: 16px;
+  border-radius: 9999px;
+  background: var(--color-accent);
+  border: 2px solid var(--color-surface);
+}
+input[type="range"].slider-safe::-webkit-slider-thumb {
+  background: var(--color-safe);
+  box-shadow: 0 0 0 1px var(--color-safe);
+}
+input[type="range"].slider-caution::-webkit-slider-thumb {
+  background: var(--color-caution);
+  box-shadow: 0 0 0 1px var(--color-caution);
+}
+
+/* ----------------------------------------------------------------
+   Animations
+---------------------------------------------------------------- */
 @keyframes fadeIn {
   from {
     opacity: 0;
-    transform: translateY(20px);
+    transform: translateY(16px);
   }
   to {
     opacity: 1;
     transform: translateY(0);
   }
 }
-
 @keyframes slideInFromTop {
   from {
     opacity: 0;
-    transform: translateY(-30px);
+    transform: translateY(-24px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+@keyframes modalIn {
+  from {
+    opacity: 0;
+    transform: scale(0.96) translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+@keyframes panelIn {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
   }
   to {
     opacity: 1;
@@ -69,24 +205,24 @@ body {
 }
 
 .animate-fade-in {
-  animation: fadeIn 0.8s ease-out forwards;
+  animation: fadeIn 0.7s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
-
 .animate-slide-in {
-  animation: slideInFromTop 0.6s ease-out forwards;
+  animation: slideInFromTop 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
-
-@keyframes modalIn {
-  from {
-    opacity: 0;
-    transform: scale(0.95) translateY(20px);
-  }
-  to {
-    opacity: 1;
-    transform: scale(1) translateY(0);
-  }
-}
-
 .animate-modal-in {
-  animation: modalIn 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  animation: modalIn 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+.animate-panel-in {
+  animation: panelIn 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
 }
